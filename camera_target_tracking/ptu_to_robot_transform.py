@@ -22,7 +22,7 @@ from scipy.spatial.transform import Rotation as R
 # Class definition fo the estimator
 class PTU_to_Rover_Transoformer(Node):
 	def __init__(self):
-		super().__init__("ptu_to_robot_transform")
+		super().__init__("ptu_to_robot_transformer")
 
 		# Subscription
 		self.frame_sub = self.create_subscription(PoseStamped, "/target_tracking/ptu_to_marker_pose", self.callback_frame, 10)
@@ -79,8 +79,18 @@ class PTU_to_Rover_Transoformer(Node):
 def main(args=None):
 	rclpy.init(args=args)
 	node = PTU_to_Rover_Transoformer()
-	rclpy.spin(node)
-	rclpy.shutdown()
+	try:
+		rclpy.spin(node)
+	except KeyboardInterrupt:
+		pass
+	except BaseException:
+		print('exception in server:', file=sys.stderr)
+		raise
+	finally:
+		# Destroy the node explicitly
+		# (optional - Done automatically when node is garbage collected)
+		node.destroy_node()
+		rclpy.shutdown() 
 
 
 # Main

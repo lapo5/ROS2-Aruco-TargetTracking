@@ -53,7 +53,7 @@ class ArucoPoseNode(Node):
 
 
 	# Destructor function: call the stop service and disarm the camera regularly
-	def __del__(self):
+	def clean_exit(self):
 		self.callback_stop_service(False)
 
 
@@ -179,7 +179,7 @@ def main(args=None):
 		rclpy.spin(node)
 	except KeyboardInterrupt:
 		pass
-		# node.clean_exit()
+		node.clean_exit()
 	except BaseException:
 		print('exception in server:', file=sys.stderr)
 		raise

@@ -22,9 +22,9 @@ import math
 
 
 # Class definition fo the estimator
-class PTU_to_Rover_Transoformer(Node):
+class Cam_to_PTU_Transformer(Node):
 	def __init__(self):
-		super().__init__("camera_to_ptu_base")
+		super().__init__("cam_to_ptu_base_transformer")
 
 		# Subscription
 		self.frame_sub = self.create_subscription(PoseStamped, "/target_tracking/camera_to_marker_pose", self.callback_frame, 10)
@@ -104,9 +104,19 @@ class PTU_to_Rover_Transoformer(Node):
 # Main loop function
 def main(args=None):
 	rclpy.init(args=args)
-	node = PTU_to_Rover_Transoformer()
-	rclpy.spin(node)
-	rclpy.shutdown()
+	node = Cam_to_PTU_Transformer()
+	try:
+		rclpy.spin(node)
+	except KeyboardInterrupt:
+		pass
+	except BaseException:
+		print('exception in server:', file=sys.stderr)
+		raise
+	finally:
+		# Destroy the node explicitly
+		# (optional - Done automatically when node is garbage collected)
+		node.destroy_node()
+		rclpy.shutdown() 
 
 
 # Main
