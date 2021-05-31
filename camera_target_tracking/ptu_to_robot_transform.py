@@ -16,7 +16,9 @@ from functools import partial
 import json
 import numpy as np
 from scipy.spatial.transform import Rotation as R
-
+import tf2_ros
+import geometry_msgs
+import sys
 
 
 # Class definition fo the estimator
@@ -31,9 +33,31 @@ class PTU_to_Rover_Transoformer(Node):
 		self.pose_pub = self.create_publisher(PoseStamped, "/target_tracking/rover_to_marker", 10)
 
 		self.robot_T_base_PTU = np.eye(4, dtype=np.float32)
-		self.robot_T_base_PTU[0, 3] = 0.0
+		self.robot_T_base_PTU[0, 3] = -1.0
 		self.robot_T_base_PTU[1, 3] = 0.0
-		self.robot_T_base_PTU[2, 3] = 0.0
+		self.robot_T_base_PTU[2, 3] = 0.5
+
+		self.br = tf2_ros.TransformBroadcaster(self)
+
+		broadcaster = tf2_ros.StaticTransformBroadcaster(self)
+		static_transformStamped = geometry_msgs.msg.TransformStamped()
+
+		static_transformStamped.header.stamp = self.get_clock().now().to_msg()
+		static_transformStamped.header.frame_id = "Rover_CoM"
+		static_transformStamped.child_frame_id = "PTU_Base"
+
+		static_transformStamped.transform.translation.x =  -1.0
+		static_transformStamped.transform.translation.y = 0.0
+		static_transformStamped.transform.translation.z = 0.5
+
+		rot = R.from_euler('zyx', [180.0, 0.0, 0.0], degrees=True)
+		quat = rot.as_quat()
+		static_transformStamped.transform.rotation.x = quat[0]
+		static_transformStamped.transform.rotation.y = quat[1]
+		static_transformStamped.transform.rotation.z = quat[2]
+		static_transformStamped.transform.rotation.w = quat[3]
+
+		broadcaster.sendTransform(static_transformStamped)
 
 
 	# This function store the received frame in a class attribute
@@ -72,6 +96,20 @@ class PTU_to_Rover_Transoformer(Node):
 		# Publish the message
 		self.pose_pub.publish(new_msg)
 
+		t = geometry_msgs.msg.TransformStamped()
+
+		t.header.stamp = self.get_clock().now().to_msg()
+		t.header.frame_id = "Rover_CoM"
+		t.child_frame_id = "Marker"
+		t.transform.translation.x = new_msg.pose.position.x
+		t.transform.translation.y = new_msg.pose.position.y
+		t.transform.translation.z = new_msg.pose.position.z
+		t.transform.rotation.x = quat[0]
+		t.transform.rotation.y = quat[1]
+		t.transform.rotation.z = quat[2]
+		t.transform.rotation.w = quat[3]
+
+		#self.br.sendTransform(t)
 
 
 
