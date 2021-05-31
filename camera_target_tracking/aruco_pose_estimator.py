@@ -7,6 +7,8 @@ import rclpy
 from rclpy.node import Node
 from cv_bridge import CvBridge
 import threading
+from std_msgs.msg import Header
+from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Image
 from allied_vision_camera_interfaces.msg import Pose
 from allied_vision_camera_interfaces.srv import CameraState
@@ -39,10 +41,10 @@ class ArucoPoseNode(Node):
 		self.bridge = CvBridge()
 
 		# Subscription
-		self.frame_sub = self.create_subscription(Image, "frame", self.callback_frame, 10)
+		self.frame_sub = self.create_subscription(Image, "/camera/raw_frame", self.callback_frame, 10)
 
 		# Publishers
-		self.pose_pub = self.create_publisher(Pose, "raw_pose", 10)
+		self.pose_pub = self.create_publisher(PoseStamped, "/target_tracking/camera_to_marker_pose", 10)
 		self.pose_timer = self.create_timer(0.03, self.publish_pose)
 
 		# Estimation process
@@ -57,7 +59,7 @@ class ArucoPoseNode(Node):
 
 	# This function is a client which asks the camera to shutdown when the node is killed
 	def  callback_stop_service(self, stop_flag):
-		client = self.create_client(CameraState, "cam_state")
+		client = self.create_client(CameraState, "/camera/get_cam_state")
 		while not client.wait_for_service(1.0):
 			self.get_logger().warn("Waiting for server response...")
 
@@ -81,31 +83,31 @@ class ArucoPoseNode(Node):
 	def publish_pose(self):
 		if len(self.marker_pose) != 0:
 			
-			msg = Pose()
+			msg = PoseStamped()
 
 			# If the marker is in view
 			if self.marker_pose[2]:
 				
+				msg.header = Header()
+				msg.header.stamp = self.get_clock().now().to_msg()
+				msg.header.frame_id = "PTU_cam"
 
 				# Translation
-				msg.x = self.marker_pose[0][0][0][0]
-				msg.y = self.marker_pose[0][0][0][1]
-				msg.z = self.marker_pose[0][0][0][2]
+				msg.pose.position.x = self.marker_pose[0][0][0][0]
+				msg.pose.position.y = self.marker_pose[0][0][0][1]
+				msg.pose.position.z = self.marker_pose[0][0][0][2]
+
+				rot = R.from_rotvec([self.marker_pose[1][0][0][0], self.marker_pose[1][0][0][1], self.marker_pose[1][0][0][2]])
+				quat = rot.as_quat()
 
 				# short-Rodrigues (angle-axis)
-				msg.r1 = self.marker_pose[1][0][0][0]
-				msg.r2 = self.marker_pose[1][0][0][1]
-				msg.r3 = self.marker_pose[1][0][0][2]
+				msg.pose.orientation.x = quat[0]
+				msg.pose.orientation.y = quat[1]
+				msg.pose.orientation.z = quat[2]
+				msg.pose.orientation.w = quat[3]
 
-				# in view
-				msg.in_view = True
-
-			else:
-
-				msg.in_view = False
-
-			# Publish the message
-			self.pose_pub.publish(msg)
+				# Publish the message
+				self.pose_pub.publish(msg)
 		
 
 	# This function upload from JSON the intrinsic camera parameters k_mtx and dist_coeff
@@ -172,8 +174,20 @@ class ArucoPoseNode(Node):
 def main(args=None):
 	rclpy.init(args=args)
 	node = ArucoPoseNode()
-	rclpy.spin(node)
-	rclpy.shutdown()
+	
+	try:
+		rclpy.spin(node)
+	except KeyboardInterrupt:
+		pass
+		# node.clean_exit()
+	except BaseException:
+		print('exception in server:', file=sys.stderr)
+		raise
+	finally:
+		# Destroy the node explicitly
+		# (optional - Done automatically when node is garbage collected)
+		node.destroy_node()
+		rclpy.shutdown() 
 
 
 # Main

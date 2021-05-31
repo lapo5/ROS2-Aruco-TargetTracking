@@ -20,7 +20,10 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-        "aruco_detector = camera_target_tracking.aruco_pose_estimator:main"
+        'aruco_detector = camera_target_tracking.aruco_pose_estimator:main',
+        'ptu_to_robot_transform = camera_target_tracking.ptu_to_robot_transform:main',
+        'camera_to_ptu_base = camera_target_tracking.camera_to_ptu_base:main',
+        'ptu_controller = camera_target_tracking.ptu_controller:main',
         ],
     },
 )
