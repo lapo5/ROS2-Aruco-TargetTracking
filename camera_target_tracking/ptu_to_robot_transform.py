@@ -39,25 +39,44 @@ class PTU_to_Rover_Transoformer(Node):
 
 		self.br = tf2_ros.TransformBroadcaster(self)
 
-		broadcaster = tf2_ros.StaticTransformBroadcaster(self)
+		self.static_broadcaster = tf2_ros.StaticTransformBroadcaster(self)
+
 		static_transformStamped = geometry_msgs.msg.TransformStamped()
 
 		static_transformStamped.header.stamp = self.get_clock().now().to_msg()
-		static_transformStamped.header.frame_id = "Rover_CoM"
-		static_transformStamped.child_frame_id = "PTU_Base"
+		static_transformStamped.header.frame_id = "world"
+		static_transformStamped.child_frame_id = "Rover_CoM"
 
-		static_transformStamped.transform.translation.x =  -1.0
+		static_transformStamped.transform.translation.x = 0.0
 		static_transformStamped.transform.translation.y = 0.0
-		static_transformStamped.transform.translation.z = 0.5
+		static_transformStamped.transform.translation.z = 0.0
+
+		static_transformStamped.transform.rotation.x = 0.0
+		static_transformStamped.transform.rotation.y = 0.0
+		static_transformStamped.transform.rotation.z = 0.0
+		static_transformStamped.transform.rotation.w = 1.0
+
+		self.static_broadcaster.sendTransform(static_transformStamped)
+
+
+		static_transformStamped2 = geometry_msgs.msg.TransformStamped()
+
+		static_transformStamped2.header.stamp = self.get_clock().now().to_msg()
+		static_transformStamped2.header.frame_id = "Rover_CoM"
+		static_transformStamped2.child_frame_id = "PTU_Base"
+
+		static_transformStamped2.transform.translation.x =  -1.0
+		static_transformStamped2.transform.translation.y = 0.0
+		static_transformStamped2.transform.translation.z = 0.5
 
 		rot = R.from_euler('zyx', [180.0, 0.0, 0.0], degrees=True)
 		quat = rot.as_quat()
-		static_transformStamped.transform.rotation.x = quat[0]
-		static_transformStamped.transform.rotation.y = quat[1]
-		static_transformStamped.transform.rotation.z = quat[2]
-		static_transformStamped.transform.rotation.w = quat[3]
+		static_transformStamped2.transform.rotation.x = quat[0]
+		static_transformStamped2.transform.rotation.y = quat[1]
+		static_transformStamped2.transform.rotation.z = quat[2]
+		static_transformStamped2.transform.rotation.w = quat[3]
 
-		broadcaster.sendTransform(static_transformStamped)
+		self.static_broadcaster.sendTransform(static_transformStamped2)
 
 
 	# This function store the received frame in a class attribute

@@ -83,18 +83,10 @@ class PTU_Controller(Node):
 
 	# This function store the received frame in a class attribute
 	def callback_frame(self, msg):
-		
-		base_ptu_T_marker = np.eye(4, dtype=np.float32)
-
-		rot = R.from_quat([msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w])
-		base_ptu_T_marker[0:3, 0:3] = rot.as_matrix()
-		base_ptu_T_marker[0, 3] = msg.pose.position.x
-		base_ptu_T_marker[1, 3] = msg.pose.position.y
-		base_ptu_T_marker[2, 3] = msg.pose.position.z
 
 
-		pan = math.atan2(-(msg.pose.position.x), msg.pose.position.z)
-		tilt = math.atan2(-(msg.pose.position.y), msg.pose.position.z)
+		pan = math.atan2((msg.pose.position.y), msg.pose.position.x)
+		tilt = math.atan2((msg.pose.position.z), msg.pose.position.x)
 
 		print("Wanted pan: {0}".format(pan))
 		print("Wanted tilt: {0}".format(tilt))

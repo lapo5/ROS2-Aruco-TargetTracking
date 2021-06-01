@@ -150,24 +150,6 @@ class Cam_to_PTU_Transformer(Node):
 		print('Send Trasform')
 
 
-		static_transformStamped = geometry_msgs.msg.TransformStamped()
-
-		static_transformStamped.header.stamp = self.get_clock().now().to_msg()
-		static_transformStamped.header.frame_id = "world"
-		static_transformStamped.child_frame_id = "Rover_CoM"
-
-		static_transformStamped.transform.translation.x = 0.0
-		static_transformStamped.transform.translation.y = 0.0
-		static_transformStamped.transform.translation.z = 0.0
-
-		static_transformStamped.transform.rotation.x = 0.0
-		static_transformStamped.transform.rotation.y = 0.0
-		static_transformStamped.transform.rotation.z = 0.0
-		static_transformStamped.transform.rotation.w = 1.0
-
-		self.br.sendTransform(static_transformStamped)
-
-
 
 
 # Main loop function

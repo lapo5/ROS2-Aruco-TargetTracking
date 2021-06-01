@@ -128,8 +128,6 @@ class ArucoPoseNode(Node):
 		else:
 			self.frame = frame
 
-		self.get_logger().info("Frame received.")
-
 
 
 	# This function detect and estimate the marker pose wrt the camera frame
