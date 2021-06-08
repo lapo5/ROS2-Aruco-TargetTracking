@@ -59,6 +59,8 @@ class PTU_to_Rover_Transoformer(Node):
 		self.static_broadcaster.sendTransform(static_transformStamped)
 
 
+		self.static_broadcaster2 = tf2_ros.StaticTransformBroadcaster(self)
+
 		static_transformStamped2 = geometry_msgs.msg.TransformStamped()
 
 		static_transformStamped2.header.stamp = self.get_clock().now().to_msg()
@@ -76,7 +78,7 @@ class PTU_to_Rover_Transoformer(Node):
 		static_transformStamped2.transform.rotation.z = quat[2]
 		static_transformStamped2.transform.rotation.w = quat[3]
 
-		self.static_broadcaster.sendTransform(static_transformStamped2)
+		self.static_broadcaster2.sendTransform(static_transformStamped2)
 
 
 	# This function store the received frame in a class attribute

@@ -17,6 +17,10 @@ import json
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
+from std_msgs.msg import Header
+import tf2_ros
+import geometry_msgs
+
 # Paths
 CALIB_PATH = "./src/AlliedVision_Alvium1800U/allied_vision_camera/allied_vision_camera/calib_params.json"
 MARKER_SIDE = 0.1 # meters
@@ -40,8 +44,11 @@ class ArucoPoseNode(Node):
 		self.aruco_params = aruco.DetectorParameters_create()
 		self.bridge = CvBridge()
 
+
+		self.frame_pub = self.create_publisher(Image, "/target_tracking/marker_image", 2)
+
 		# Subscription
-		self.frame_sub = self.create_subscription(Image, "/camera/raw_frame", self.callback_frame, 10)
+		self.frame_sub = self.create_subscription(Image, "/camera/raw_frame", self.callback_frame, 2)
 
 		# Publishers
 		self.pose_pub = self.create_publisher(PoseStamped, "/target_tracking/camera_to_marker_pose", 10)
@@ -161,10 +168,12 @@ class ArucoPoseNode(Node):
 				else:
 					self.marker_pose = [0, 0, False]
 
-				# Show the frame
-				cv2.namedWindow("frame", cv2.WINDOW_AUTOSIZE)
-				cv2.imshow("frame", self.frame)
-				cv2.waitKey(1)
+
+				self.image_message = self.bridge.cv2_to_imgmsg(self.frame, encoding="mono8")
+				self.image_message.header = Header()
+				self.image_message.header.stamp = self.get_clock().now().to_msg()
+				self.image_message.header.frame_id = "Camera_Base"
+				self.frame_pub.publish(self.image_message)
 	
 
 

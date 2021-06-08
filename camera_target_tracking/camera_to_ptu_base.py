@@ -58,6 +58,27 @@ class Cam_to_PTU_Transformer(Node):
 
 		self.br = tf2_ros.TransformBroadcaster(self)
 
+		self.static_broadcaster = tf2_ros.StaticTransformBroadcaster(self)
+
+		static_transformStamped = geometry_msgs.msg.TransformStamped()
+
+		static_transformStamped.header.stamp = self.get_clock().now().to_msg()
+		static_transformStamped.header.frame_id = "PTU_Tool"
+		static_transformStamped.child_frame_id = "Camera_Base"
+
+		static_transformStamped.transform.translation.x =  0.0
+		static_transformStamped.transform.translation.y = 0.0
+		static_transformStamped.transform.translation.z = 0.0
+
+		rot = R.from_euler('zyx', [0.0, 0.0, 0.0], degrees=True)
+		quat = rot.as_quat()
+		static_transformStamped.transform.rotation.x = quat[0]
+		static_transformStamped.transform.rotation.y = quat[1]
+		static_transformStamped.transform.rotation.z = quat[2]
+		static_transformStamped.transform.rotation.w = quat[3]
+
+		self.static_broadcaster.sendTransform(static_transformStamped)
+
 
 	# This function store the received frame in a class attribute
 	def callback_frame(self, msg):

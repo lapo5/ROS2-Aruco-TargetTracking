@@ -46,6 +46,8 @@ class PTU_Controller(Node):
 		self.req_ptu_pos = SetPanTilt.Request()
 		self.req_ptu_pos.pan = 0.0
 		self.req_ptu_pos.tilt = 0.0
+		self.go = True
+		self.send_request_ptu_pos()
 
 		self.discretization = 10
 
@@ -88,19 +90,27 @@ class PTU_Controller(Node):
 		pan = math.atan2((msg.pose.position.y), msg.pose.position.x)
 		tilt = math.atan2((msg.pose.position.z), msg.pose.position.x)
 
+		print("discretization: {0}".format(self.discretization))
 		print("Wanted pan: {0}".format(pan))
 		print("Wanted tilt: {0}".format(tilt))
 
 		pan_discret = int(pan / self.discretization)
-		if (pan % self.discretization) > self.discretization / 2.0:
-			pan_discret = pan_discret + 1
+		if math.abs(pan % self.discretization) > self.discretization / 2.0:
+			if pan < 0:
+				pan_discret = pan_discret - 1
+			else:
+				pan_discret = pan_discret + 1
 
 		self.req_ptu_pos.pan = float(pan_discret * self.discretization)
 
 
 		tilt_discret = int(tilt / self.discretization)
-		if (tilt % self.discretization) > self.discretization / 2.0:
-			tilt_discret = tilt_discret + 1
+		if math.abs(tilt % self.discretization) > self.discretization / 2.0:
+			if tilt < 0:
+				tilt_discret = tilt_discret - 1
+			else:
+				tilt_discret = tilt_discret + 1
+
 		self.req_ptu_pos.tilt = float(tilt_discret * self.discretization)
 
 		print("Result pan: {0}".format(self.req_ptu_pos.pan))
