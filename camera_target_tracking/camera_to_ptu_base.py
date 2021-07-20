@@ -116,6 +116,7 @@ class Cam_to_PTU_Transformer(Node):
 
 		# Publish the message
 		self.pose_pub.publish(new_msg)
+		
 		t = geometry_msgs.msg.TransformStamped()
 
 		t.header.stamp = self.get_clock().now().to_msg()

@@ -45,7 +45,7 @@ class PTU_to_Rover_Transoformer(Node):
 
 		static_transformStamped.header.stamp = self.get_clock().now().to_msg()
 		static_transformStamped.header.frame_id = "world"
-		static_transformStamped.child_frame_id = "Rover_CoM"
+		static_transformStamped.child_frame_id = "base_link"
 
 		static_transformStamped.transform.translation.x = 0.0
 		static_transformStamped.transform.translation.y = 0.0
@@ -64,7 +64,7 @@ class PTU_to_Rover_Transoformer(Node):
 		static_transformStamped2 = geometry_msgs.msg.TransformStamped()
 
 		static_transformStamped2.header.stamp = self.get_clock().now().to_msg()
-		static_transformStamped2.header.frame_id = "Rover_CoM"
+		static_transformStamped2.header.frame_id = "base_link"
 		static_transformStamped2.child_frame_id = "PTU_Base"
 
 		static_transformStamped2.transform.translation.x =  -1.0
@@ -130,7 +130,7 @@ class PTU_to_Rover_Transoformer(Node):
 		t.transform.rotation.z = quat[2]
 		t.transform.rotation.w = quat[3]
 
-		#self.br.sendTransform(t)
+		self.br.sendTransform(t)
 
 
 
