@@ -183,7 +183,7 @@ def main(args=None):
 	except KeyboardInterrupt:
 		pass
 	except BaseException:
-		print('exception in server:', file=sys.stderr)
+		print('Exception in Node CamToBase:', file=sys.stderr)
 		raise
 	finally:
 		# Destroy the node explicitly

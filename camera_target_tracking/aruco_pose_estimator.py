@@ -22,7 +22,12 @@ import tf2_ros
 import geometry_msgs
 
 # Paths
-CALIB_PATH = "./src/AlliedVision_Alvium1800U/allied_vision_camera/allied_vision_camera/calib_params.json"
+from ament_index_python.packages import get_package_share_directory
+
+package_share_directory = get_package_share_directory('allied_vision_camera')
+# Path to store the calibration file
+CALIB_PATH = package_share_directory + "/resources/calib_params.json"
+
 MARKER_SIDE = 0.1 # meters
 
 
@@ -185,10 +190,10 @@ def main(args=None):
 	try:
 		rclpy.spin(node)
 	except KeyboardInterrupt:
-		pass
+		print('ARUCO Detector Node stopped cleanly')
 		node.clean_exit()
 	except BaseException:
-		print('exception in server:', file=sys.stderr)
+		print('Exception in ARUCO Detector:', file=sys.stderr)
 		raise
 	finally:
 		# Destroy the node explicitly

@@ -4,7 +4,7 @@
   <name>camera_target_tracking</name>
   <version>0.0.0</version>
   <description>ARUCO Target Tracking Module</description>
-  <maintainer email="alessandro.scarciglia-somministrato@thalesaleniaspace.com ">Alessandro Scarciglia</maintainer>
+  <maintainer email="alessandro.scarciglia-somministrato@thalesaleniaspace.com">Alessandro Scarciglia</maintainer>
   <license>BSD</license>
 
   <depend>rclpy</depend>

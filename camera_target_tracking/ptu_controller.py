@@ -131,7 +131,7 @@ def main(args=None):
 	except KeyboardInterrupt:
 		node.clean_exit()
 	except BaseException:
-		print('exception in server:', file=sys.stderr)
+		print('Exception in Node PTU Controller:', file=sys.stderr)
 		raise
 	finally:
 		# Destroy the node explicitly
