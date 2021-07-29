@@ -30,7 +30,7 @@ class Cam_to_PTU_Transformer(Node):
 		super().__init__("cam_to_ptu_base_transformer")
 
 		# Subscription
-		self.frame_sub = self.create_subscription(PoseStamped, "/target_tracking/camera_to_marker_pose", self.callback_frame, 10)
+		self.frame_sub = self.create_subscription(PoseStamped, "/target_tracking/camera_to_marker_pose", self.callback_marker, 10)
 
 		self.ptu_sub = self.create_subscription(PTU, "/PTU/state", self.callback_ptu, 1)
 
@@ -58,30 +58,9 @@ class Cam_to_PTU_Transformer(Node):
 
 		self.br = tf2_ros.TransformBroadcaster(self)
 
-		self.static_broadcaster = tf2_ros.StaticTransformBroadcaster(self)
-
-		static_transformStamped = geometry_msgs.msg.TransformStamped()
-
-		static_transformStamped.header.stamp = self.get_clock().now().to_msg()
-		static_transformStamped.header.frame_id = "PTU_Tool"
-		static_transformStamped.child_frame_id = "Camera_Base"
-
-		static_transformStamped.transform.translation.x =  0.0
-		static_transformStamped.transform.translation.y = 0.0
-		static_transformStamped.transform.translation.z = 0.0
-
-		rot = R.from_euler('zyx', [0.0, 0.0, 0.0], degrees=True)
-		quat = rot.as_quat()
-		static_transformStamped.transform.rotation.x = quat[0]
-		static_transformStamped.transform.rotation.y = quat[1]
-		static_transformStamped.transform.rotation.z = quat[2]
-		static_transformStamped.transform.rotation.w = quat[3]
-
-		self.static_broadcaster.sendTransform(static_transformStamped)
-
 
 	# This function store the received frame in a class attribute
-	def callback_frame(self, msg):
+	def callback_marker(self, msg):
 		
 		baseline_cam_T_marker = np.eye(4, dtype=np.float32)
 
@@ -99,7 +78,7 @@ class Cam_to_PTU_Transformer(Node):
 			
 		new_msg.header = Header()
 		new_msg.header.stamp = self.get_clock().now().to_msg()
-		new_msg.header.frame_id = "PTU_Base"
+		new_msg.header.frame_id = "ptu_base_link"
 		
 		# Translation
 		new_msg.pose.position.x = float(base_ptu_T_marker[0, 3])
@@ -120,8 +99,8 @@ class Cam_to_PTU_Transformer(Node):
 		t = geometry_msgs.msg.TransformStamped()
 
 		t.header.stamp = self.get_clock().now().to_msg()
-		t.header.frame_id = "PTU_Base"
-		t.child_frame_id = "Marker"
+		t.header.frame_id = "ptu_base_link"
+		t.child_frame_id = "marker_link"
 		t.transform.translation.x = new_msg.pose.position.x
 		t.transform.translation.y = new_msg.pose.position.y
 		t.transform.translation.z = new_msg.pose.position.z
@@ -154,22 +133,6 @@ class Cam_to_PTU_Transformer(Node):
 
 		rot = R.from_matrix(self.base_ptu_T_baseline_cam[0:3, 0:3])
 		quat = rot.as_quat()
-
-		t = geometry_msgs.msg.TransformStamped()
-
-		t.header.stamp = self.get_clock().now().to_msg()
-		t.header.frame_id = "PTU_Base"
-		t.child_frame_id = "PTU_Tool"
-		t.transform.translation.x = 0.0
-		t.transform.translation.y = 0.0
-		t.transform.translation.z = 0.2
-		t.transform.rotation.x = quat[0]
-		t.transform.rotation.y = quat[1]
-		t.transform.rotation.z = quat[2]
-		t.transform.rotation.w = quat[3]
-
-		self.br.sendTransform(t)
-		print('Send Trasform')
 
 
 
