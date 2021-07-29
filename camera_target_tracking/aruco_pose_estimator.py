@@ -121,6 +121,12 @@ class ArucoPoseNode(Node):
 
 				# Publish the message
 				self.pose_pub.publish(msg)
+
+				self.image_message = self.bridge.cv2_to_imgmsg(self.frame, encoding="mono8")
+				self.image_message.header = Header()
+				self.image_message.header.stamp = self.get_clock().now().to_msg()
+				self.image_message.header.frame_id = "parking_camera_link"
+				self.frame_pub.publish(self.image_message)
 		
 
 	# This function upload from JSON the intrinsic camera parameters k_mtx and dist_coeff
@@ -174,12 +180,6 @@ class ArucoPoseNode(Node):
 				else:
 					self.marker_pose = [0, 0, False]
 
-
-				self.image_message = self.bridge.cv2_to_imgmsg(self.frame, encoding="mono8")
-				self.image_message.header = Header()
-				self.image_message.header.stamp = self.get_clock().now().to_msg()
-				self.image_message.header.frame_id = "parking_camera_link"
-				self.frame_pub.publish(self.image_message)
 	
 
 
