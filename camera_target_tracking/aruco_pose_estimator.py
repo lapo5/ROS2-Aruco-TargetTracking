@@ -24,7 +24,7 @@ import geometry_msgs
 # Paths
 from ament_index_python.packages import get_package_share_directory
 
-package_share_directory = get_package_share_directory('allied_vision_camera')
+package_share_directory = get_package_share_directory('hal_allied_vision_camera')
 # Path to store the calibration file
 CALIB_PATH = package_share_directory + "/resources/calib_params.json"
 
