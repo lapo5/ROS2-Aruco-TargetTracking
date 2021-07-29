@@ -102,7 +102,7 @@ class ArucoPoseNode(Node):
 				
 				msg.header = Header()
 				msg.header.stamp = self.get_clock().now().to_msg()
-				msg.header.frame_id = "PTU_cam"
+				msg.header.frame_id = "marker_link"
 
 				# Translation
 				msg.pose.position.x = self.marker_pose[0][0][0][0]
@@ -177,7 +177,7 @@ class ArucoPoseNode(Node):
 				self.image_message = self.bridge.cv2_to_imgmsg(self.frame, encoding="mono8")
 				self.image_message.header = Header()
 				self.image_message.header.stamp = self.get_clock().now().to_msg()
-				self.image_message.header.frame_id = "Camera_Base"
+				self.image_message.header.frame_id = "parking_camera_link"
 				self.frame_pub.publish(self.image_message)
 	
 
