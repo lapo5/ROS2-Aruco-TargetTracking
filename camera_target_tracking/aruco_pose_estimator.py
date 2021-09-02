@@ -53,7 +53,7 @@ class ArucoPoseNode(Node):
 		self.frame_pub = self.create_publisher(Image, "/target_tracking/marker_image", 2)
 
 		# Subscription
-		self.frame_sub = self.create_subscription(Image, "/camera/raw_frame", self.callback_frame, 2)
+		self.frame_sub = self.create_subscription(Image, "/parking_camera/raw_frame", self.callback_frame, 2)
 
 		# Publishers
 		self.pose_pub = self.create_publisher(PoseStamped, "/target_tracking/camera_to_marker_pose", 10)
@@ -72,7 +72,7 @@ class ArucoPoseNode(Node):
 
 	# This function is a client which asks the camera to shutdown when the node is killed
 	def  callback_stop_service(self, stop_flag):
-		client = self.create_client(CameraState, "/camera/get_cam_state")
+		client = self.create_client(CameraState, "/parking_camera/get_cam_state")
 		while not client.wait_for_service(1.0):
 			self.get_logger().warn("Waiting for server response...")
 
