@@ -12,6 +12,7 @@
   <depend>geometry_msgs</depend>
   <depend>flir_ptu_d46_interfaces</depend>
   <depend>allied_vision_camera_interfaces</depend>
+  <depend>aruco_interfaces</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

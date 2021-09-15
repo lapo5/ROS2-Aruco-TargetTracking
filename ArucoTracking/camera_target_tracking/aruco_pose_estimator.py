@@ -10,7 +10,7 @@ import threading
 from std_msgs.msg import Header
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Image
-from allied_vision_camera_interfaces.msg import Pose
+from aruco_interfaces.msg import Pose
 from allied_vision_camera_interfaces.srv import CameraState
 from functools import partial
 import json
@@ -56,7 +56,7 @@ class ArucoPoseNode(Node):
 		self.frame_sub = self.create_subscription(Image, "/parking_camera/raw_frame", self.callback_frame, 2)
 
 		# Publishers
-		self.pose_pub = self.create_publisher(PoseStamped, "/target_tracking/camera_to_marker_pose", 10)
+		self.pose_pub = self.create_publisher(Pose, "raw_pose", 10)
 		self.pose_timer = self.create_timer(0.03, self.publish_pose)
 
 		# Estimation process
@@ -92,42 +92,43 @@ class ArucoPoseNode(Node):
 
 
 
+
 	# This function publish the pose information from each frame
 	def publish_pose(self):
 		if len(self.marker_pose) != 0:
 			
-			msg = PoseStamped()
+			msg = Pose()
 
 			# If the marker is in view
 			if self.marker_pose[2]:
 				
-				msg.header = Header()
-				msg.header.stamp = self.get_clock().now().to_msg()
-				msg.header.frame_id = "marker_link"
 
 				# Translation
-				msg.pose.position.x = self.marker_pose[0][0][0][0]
-				msg.pose.position.y = self.marker_pose[0][0][0][1]
-				msg.pose.position.z = self.marker_pose[0][0][0][2]
-
-				rot = R.from_rotvec([self.marker_pose[1][0][0][0], self.marker_pose[1][0][0][1], self.marker_pose[1][0][0][2]])
-				quat = rot.as_quat()
+				msg.x = self.marker_pose[0][0][0][0]
+				msg.y = self.marker_pose[0][0][0][1]
+				msg.z = self.marker_pose[0][0][0][2]
 
 				# short-Rodrigues (angle-axis)
-				msg.pose.orientation.x = quat[0]
-				msg.pose.orientation.y = quat[1]
-				msg.pose.orientation.z = quat[2]
-				msg.pose.orientation.w = quat[3]
+				msg.r1 = self.marker_pose[1][0][0][0]
+				msg.r2 = self.marker_pose[1][0][0][1]
+				msg.r3 = self.marker_pose[1][0][0][2]
 
-				# Publish the message
-				self.pose_pub.publish(msg)
+				# in view
+				msg.in_view = True
 
-				self.image_message = self.bridge.cv2_to_imgmsg(self.frame, encoding="mono8")
-				self.image_message.header = Header()
-				self.image_message.header.stamp = self.get_clock().now().to_msg()
-				self.image_message.header.frame_id = "parking_camera_link"
-				self.frame_pub.publish(self.image_message)
-		
+			else:
+
+				msg.in_view = False
+
+			# Publish the message
+			self.pose_pub.publish(msg)
+
+			self.image_message = self.bridge.cv2_to_imgmsg(self.frame, encoding="mono8")
+			self.image_message.header = Header()
+			self.image_message.header.stamp = self.get_clock().now().to_msg()
+			self.image_message.header.frame_id = "camera_link"
+			self.frame_pub.publish(self.image_message)
+	
 
 	# This function upload from JSON the intrinsic camera parameters k_mtx and dist_coeff
 	def get_cam_parameters(self):

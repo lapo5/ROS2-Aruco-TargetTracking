@@ -27,8 +27,7 @@ setup(
     entry_points={
         'console_scripts': [
         'aruco_detector = camera_target_tracking.aruco_pose_estimator:main',
-        'camera_to_ptu_base = camera_target_tracking.camera_to_ptu_base:main',
-        'ptu_controller = camera_target_tracking.ptu_controller:main',
+        "pose_filter = camera.pose_filt_cmd:main",
         ],
     },
 )
