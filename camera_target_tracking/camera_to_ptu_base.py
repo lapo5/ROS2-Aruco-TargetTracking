@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
 
 # Libraries
-import cv2
-from cv2 import aruco
+
 import rclpy
 from rclpy.node import Node
-from cv_bridge import CvBridge
+
 import threading
 from std_msgs.msg import Header
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Image
-from allied_vision_camera_interfaces.msg import Pose
-from allied_vision_camera_interfaces.srv import CameraState
+
 from flir_ptu_d46_interfaces.msg import PTU
 from functools import partial
 import json
@@ -21,8 +19,6 @@ import math
 import sys
 import tf2_ros
 import geometry_msgs
-
-
 
 # Class definition fo the estimator
 class Cam_to_PTU_Transformer(Node):

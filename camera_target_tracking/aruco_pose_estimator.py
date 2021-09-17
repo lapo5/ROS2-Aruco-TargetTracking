@@ -10,7 +10,6 @@ import threading
 from std_msgs.msg import Header
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Image
-from allied_vision_camera_interfaces.msg import Pose
 from allied_vision_camera_interfaces.srv import CameraState
 from functools import partial
 import json
