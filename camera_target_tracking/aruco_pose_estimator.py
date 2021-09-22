@@ -1,35 +1,36 @@
 #!/usr/bin/env python3
 
 # Libraries
+import json
+import numpy as np
 import cv2
 from cv2 import aruco
+from scipy.spatial.transform import Rotation as R
+
+import threading
+from functools import partial
+
 import rclpy
 from rclpy.node import Node
+
 from cv_bridge import CvBridge
-import threading
+
+import tf2_ros
+import geometry_msgs
 from std_msgs.msg import Header
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Image
-from allied_vision_camera_interfaces.srv import CameraState
-from functools import partial
-import json
-import numpy as np
-from scipy.spatial.transform import Rotation as R
 
-from std_msgs.msg import Header
-import tf2_ros
-import geometry_msgs
+from allied_vision_camera_interfaces.srv import CameraState
 
 # Paths
 from ament_index_python.packages import get_package_share_directory
 
 package_share_directory = get_package_share_directory('hal_allied_vision_camera')
 # Path to store the calibration file
-CALIB_PATH = package_share_directory + "/resources/calib_params.json"
+CALIB_PATH = package_share_directory + "/calibration/calib_params.json"
 
 MARKER_SIDE = 0.1 # meters
-
-
 
 # Class definition fo the estimator
 class ArucoPoseNode(Node):

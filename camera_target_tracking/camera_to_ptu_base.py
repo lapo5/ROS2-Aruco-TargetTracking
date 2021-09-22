@@ -1,24 +1,20 @@
 #!/usr/bin/env python3
 
 # Libraries
+from scipy.spatial.transform import Rotation as R
+import numpy as np
+import sys
 
 import rclpy
 from rclpy.node import Node
 
-import threading
+import geometry_msgs
+import tf2_ros
 from std_msgs.msg import Header
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Image
 
 from flir_ptu_d46_interfaces.msg import PTU
-from functools import partial
-import json
-import numpy as np
-from scipy.spatial.transform import Rotation as R
-import math
-import sys
-import tf2_ros
-import geometry_msgs
 
 # Class definition fo the estimator
 class Cam_to_PTU_Transformer(Node):
@@ -142,12 +138,11 @@ def main(args=None):
 	except KeyboardInterrupt:
 		pass
 	except BaseException:
-		print('Exception in Node CamToBase:', file=sys.stderr)
+		print('Exception in Node CamToPTUBase:', file=sys.stderr)
 		raise
 	finally:
 		# Destroy the node explicitly
 		# (optional - Done automatically when node is garbage collected)
-		node.destroy_node()
 		rclpy.shutdown() 
 
 

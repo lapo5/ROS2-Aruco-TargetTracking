@@ -1,21 +1,18 @@
 #!/usr/bin/env python3
 
 # Libraries
+import math
+import sys
+from functools import partial
 
 import rclpy
 from rclpy.node import Node
-from cv_bridge import CvBridge
-import threading
+
 from std_msgs.msg import Header
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import Image
 
 from flir_ptu_d46_interfaces.srv import SetPanTiltSpeed, SetPanTilt
-from functools import partial
-import json
-import numpy as np
-from scipy.spatial.transform import Rotation as R
-import math
 
 
 # Class definition fo the estimator
@@ -134,7 +131,6 @@ def main(args=None):
 	finally:
 		# Destroy the node explicitly
 		# (optional - Done automatically when node is garbage collected)
-		node.destroy_node()
 		rclpy.shutdown() 
 
 
