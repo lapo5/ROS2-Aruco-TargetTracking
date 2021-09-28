@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # Libraries
+import sys
 import json
 import numpy as np
 import cv2
