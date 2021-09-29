@@ -24,14 +24,8 @@ from sensor_msgs.msg import Image
 
 from allied_vision_camera_interfaces.srv import CameraState
 
-# Paths
 from ament_index_python.packages import get_package_share_directory
 
-package_share_directory = get_package_share_directory('hal_allied_vision_camera')
-# Path to store the calibration file
-CALIB_PATH = package_share_directory + "/calibration/calib_params.json"
-
-MARKER_SIDE = 0.1 # meters
 
 # Class definition fo the estimator
 class ArucoPoseNode(Node):
@@ -39,9 +33,40 @@ class ArucoPoseNode(Node):
 		super().__init__("aruco_pose_estimator")
 		self.get_logger().info("Marker estimator node is awake...")
 
+		self.declare_parameter("camera_module", "hal_allied_vision_camera")
+		self.camera_module = self.get_parameter("camera_module").value
+
+		self.declare_parameter("publishers.marker_image", "/target_tracking/marker_image")
+		self.marker_image_topic = self.get_parameter("publishers.marker_image").value
+
+		self.declare_parameter("publishers.marker_pose", "/target_tracking/camera_to_marker_pose")
+		self.marker_pose_topic = self.get_parameter("publishers.marker_pose").value
+
+		self.declare_parameter("pose_topic_hz", "30")
+		self.pose_topic_hz = float(self.get_parameter("pose_topic_hz").value)
+
+		self.declare_parameter("marker_side", "0.1")
+		self.marker_side = float(self.get_parameter("marker_side").value)
+
+		self.declare_parameter("subscribers.raw_frame", "/parking_camera/raw_frame")
+		self.raw_frame_topic = self.get_parameter("subscribers.raw_frame").value
+
+		self.declare_parameter("services.stop_camera", "/parking_camera/get_cam_state")
+		self.service_stop_camera = self.get_parameter("services.stop_camera").value
+
+		self.declare_parameter("frames.camera_link", "parking_camera_link")
+		self.camera_link_frame = self.get_parameter("frames.camera_link").value
+
+		self.declare_parameter("frames.marker_link", "marker_link")
+		self.marker_link_frame = self.get_parameter("frames.marker_link").value
+
+		package_share_directory = get_package_share_directory(self.camera_module)
+		# Path to store the calibration file
+		self.calibration_camera_path = package_share_directory + "/calibration/calib_params.json"
+
 		# Class attributes
 		self.cam_params = dict()
-		self.get_logger().info("Uploading intrinsic parameters from " + CALIB_PATH)
+		self.get_logger().info("Uploading intrinsic parameters from " + self.calibration_camera_path)
 		self.get_cam_parameters()
 		self.get_logger().info("Parameters successfully uploaded.")
 		self.frame = []
@@ -51,14 +76,14 @@ class ArucoPoseNode(Node):
 		self.bridge = CvBridge()
 
 
-		self.frame_pub = self.create_publisher(Image, "/target_tracking/marker_image", 2)
+		self.frame_pub = self.create_publisher(Image, self.marker_image_topic, 1)
 
 		# Subscription
-		self.frame_sub = self.create_subscription(Image, "/parking_camera/raw_frame", self.callback_frame, 2)
+		self.frame_sub = self.create_subscription(Image, self.raw_frame_topic, self.callback_frame, 1)
 
 		# Publishers
-		self.pose_pub = self.create_publisher(PoseStamped, "/target_tracking/camera_to_marker_pose", 10)
-		self.pose_timer = self.create_timer(0.03, self.publish_pose)
+		self.pose_pub = self.create_publisher(PoseStamped, self.marker_pose_topic, 10)
+		self.pose_timer = self.create_timer(1.0/self.pose_topic_hz, self.publish_pose)
 
 		self.get_logger().info("Marker estimator node ready")
 		# Estimation process
@@ -74,7 +99,7 @@ class ArucoPoseNode(Node):
 
 	# This function is a client which asks the camera to shutdown when the node is killed
 	def  callback_stop_service(self, stop_flag):
-		client = self.create_client(CameraState, "/parking_camera/get_cam_state")
+		client = self.create_client(CameraState, self.service_stop_camera)
 		while not client.wait_for_service(1.0):
 			self.get_logger().warn("Waiting for server response...")
 
@@ -105,7 +130,7 @@ class ArucoPoseNode(Node):
 				
 				msg.header = Header()
 				msg.header.stamp = self.get_clock().now().to_msg()
-				msg.header.frame_id = "marker_link"
+				msg.header.frame_id = self.marker_link_frame
 
 				# Translation
 				msg.pose.position.x = self.marker_pose[0][0][0][0]
@@ -127,13 +152,13 @@ class ArucoPoseNode(Node):
 				self.image_message = self.bridge.cv2_to_imgmsg(self.frame, encoding="mono8")
 				self.image_message.header = Header()
 				self.image_message.header.stamp = self.get_clock().now().to_msg()
-				self.image_message.header.frame_id = "parking_camera_link"
+				self.image_message.header.frame_id = self.camera_link_frame
 				self.frame_pub.publish(self.image_message)
 		
 
 	# This function upload from JSON the intrinsic camera parameters k_mtx and dist_coeff
 	def get_cam_parameters(self):
-		with open(CALIB_PATH, "r") as readfile:
+		with open(self.calibration_camera_path, "r") as readfile:
 			self.cam_params = json.load(readfile)
 
 		self.cam_params["mtx"] = np.array(self.cam_params["mtx"], dtype=float).reshape(3, 3)
@@ -165,7 +190,7 @@ class ArucoPoseNode(Node):
 				if np.all(ids != None):
 
 					# Pose estimation for each marker
-					rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners, MARKER_SIDE, 
+					rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners, self.marker_side, 
 						self.cam_params["mtx"], self.cam_params["dist"])
 
 					# (!!!) This line makes sense only if we use a single marker detection
@@ -201,7 +226,6 @@ def main(args=None):
 	finally:
 		# Destroy the node explicitly
 		# (optional - Done automatically when node is garbage collected)
-		node.destroy_node()
 		rclpy.shutdown() 
 
 

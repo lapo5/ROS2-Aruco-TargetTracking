@@ -16,6 +16,7 @@ setup(
         ('share/' + package_name, ['package.xml']),
         # Include all launch files. This is the most important line here!
         (os.path.join('share', package_name), glob('launch/*.launch.py')),
+        (os.path.join('share', package_name, 'params'), glob('params/*.yaml')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -27,7 +28,6 @@ setup(
     entry_points={
         'console_scripts': [
         'aruco_detector = camera_target_tracking.aruco_pose_estimator:main',
-        'camera_to_ptu_base = camera_target_tracking.camera_to_ptu_base:main',
         'ptu_controller = camera_target_tracking.ptu_controller:main',
         ],
     },
