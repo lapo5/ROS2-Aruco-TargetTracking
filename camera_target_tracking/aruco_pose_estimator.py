@@ -60,6 +60,7 @@ class ArucoPoseNode(Node):
 		self.pose_pub = self.create_publisher(PoseStamped, "/target_tracking/camera_to_marker_pose", 10)
 		self.pose_timer = self.create_timer(0.03, self.publish_pose)
 
+		self.get_logger().info("Marker estimator node ready")
 		# Estimation process
 		self.thread1 = threading.Thread(target=self.estimate_pose, daemon=True)
 		self.thread1.start()
