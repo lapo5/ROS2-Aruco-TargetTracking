@@ -51,8 +51,8 @@ class ArucoPoseNode(Node):
 		self.declare_parameter("subscribers.raw_frame", "/parking_camera/raw_frame")
 		self.raw_frame_topic = self.get_parameter("subscribers.raw_frame").value
 
-		self.declare_parameter("services.stop_camera", "/parking_camera/get_cam_state")
-		self.service_stop_camera = self.get_parameter("services.stop_camera").value
+		self.declare_parameter("client_services.stop_camera", "/parking_camera/get_cam_state")
+		self.service_stop_camera = self.get_parameter("client_services.stop_camera").value
 
 		self.declare_parameter("frames.camera_link", "parking_camera_link")
 		self.camera_link_frame = self.get_parameter("frames.camera_link").value
@@ -75,7 +75,6 @@ class ArucoPoseNode(Node):
 		self.aruco_params = aruco.DetectorParameters_create()
 		self.bridge = CvBridge()
 
-
 		self.frame_pub = self.create_publisher(Image, self.marker_image_topic, 1)
 
 		# Subscription
@@ -85,15 +84,16 @@ class ArucoPoseNode(Node):
 		self.pose_pub = self.create_publisher(PoseStamped, self.marker_pose_topic, 10)
 		self.pose_timer = self.create_timer(1.0/self.pose_topic_hz, self.publish_pose)
 
-		self.get_logger().info("Marker estimator node ready")
 		# Estimation process
 		self.thread1 = threading.Thread(target=self.estimate_pose, daemon=True)
 		self.thread1.start()
 
+		self.get_logger().info("Marker estimator node ready")
+
 
 	# Destructor function: call the stop service and disarm the camera regularly
 	def clean_exit(self):
-		#self.callback_stop_service(False)
+		self.callback_stop_service(False)
 		pass
 
 
@@ -116,8 +116,6 @@ class ArucoPoseNode(Node):
 			self.get_logger().info("Camera state has been set: " + str(response.cam_state))
 		except Exception as e:
 			self.get_logger().info("Service call failed %r" %(e,))
-
-
 
 	# This function publish the pose information from each frame
 	def publish_pose(self):
@@ -165,7 +163,6 @@ class ArucoPoseNode(Node):
 		self.cam_params["dist"] = np.array(self.cam_params["dist"], dtype=float)
 
 
-
 	# This function store the received frame in a class attribute
 	def callback_frame(self, msg):
 		frame = self.bridge.imgmsg_to_cv2(msg)
@@ -173,7 +170,6 @@ class ArucoPoseNode(Node):
 			self.frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 		else:
 			self.frame = frame
-
 
 
 	# This function detect and estimate the marker pose wrt the camera frame
@@ -207,8 +203,6 @@ class ArucoPoseNode(Node):
 				else:
 					self.marker_pose = [0, 0, False]
 
-	
-
 
 # Main loop function
 def main(args=None):
@@ -219,13 +213,14 @@ def main(args=None):
 		rclpy.spin(node)
 	except KeyboardInterrupt:
 		print('ARUCO Detector Node stopped cleanly')
-		node.clean_exit()
+		
 	except BaseException:
 		print('Exception in ARUCO Detector:', file=sys.stderr)
 		raise
 	finally:
 		# Destroy the node explicitly
 		# (optional - Done automatically when node is garbage collected)
+		node.clean_exit()
 		rclpy.shutdown() 
 
 

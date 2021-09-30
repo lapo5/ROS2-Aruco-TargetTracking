@@ -8,7 +8,7 @@ aruco_pose_estimator:
       marker_image: /target_tracking/marker_image
       marker_pose: /target_tracking/camera_to_marker_pose
 
-    services:
+    client_services:
       stop_camera: /parking_camera/get_cam_state
 
     subscribers:

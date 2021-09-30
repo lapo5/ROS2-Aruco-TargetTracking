@@ -9,11 +9,14 @@ import launch.actions
 from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
 
-from launch.actions.execute_process import ExecuteProcess
-
 def generate_launch_description():
     return LaunchDescription([
-        
+        Node(
+            package='hal_allied_vision_camera',
+            executable='av_node',
+            name='hal_allied_vision_camera',
+            parameters=[os.path.join(get_package_share_directory("hal_allied_vision_camera"), 'params', 'params.yaml')],
+        ),
         Node(
             package='camera_target_tracking',
             executable='aruco_detector',
@@ -23,5 +26,5 @@ def generate_launch_description():
                     "stderr": "screen",
             },
             parameters=[os.path.join(get_package_share_directory("camera_target_tracking"), 'params', 'params.yaml')],
-        )
+        ),
 ])
