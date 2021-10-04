@@ -93,7 +93,7 @@ class ArucoPoseNode(Node):
 
 	# Destructor function: call the stop service and disarm the camera regularly
 	def clean_exit(self):
-		self.callback_stop_service(False)
+		#self.callback_stop_service(False)
 		pass
 
 
