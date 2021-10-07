@@ -93,8 +93,7 @@ class ArucoPoseNode(Node):
 
 	# Destructor function: call the stop service and disarm the camera regularly
 	def clean_exit(self):
-		#self.callback_stop_service(False)
-		pass
+		self.callback_stop_service(False)
 
 
 	# This function is a client which asks the camera to shutdown when the node is killed
@@ -220,7 +219,7 @@ def main(args=None):
 	finally:
 		# Destroy the node explicitly
 		# (optional - Done automatically when node is garbage collected)
-		node.clean_exit()
+		#node.clean_exit()
 		rclpy.shutdown() 
 
 
