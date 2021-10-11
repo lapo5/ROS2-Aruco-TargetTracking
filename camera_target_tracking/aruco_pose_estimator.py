@@ -84,6 +84,8 @@ class ArucoPoseNode(Node):
 		self.pose_pub = self.create_publisher(PoseStamped, self.marker_pose_topic, 10)
 		self.pose_timer = self.create_timer(1.0/self.pose_topic_hz, self.publish_pose)
 
+		self.br = tf2_ros.TransformBroadcaster(self)
+		
 		# Estimation process
 		self.thread1 = threading.Thread(target=self.estimate_pose, daemon=True)
 		self.thread1.start()
@@ -151,6 +153,22 @@ class ArucoPoseNode(Node):
 				self.image_message.header.stamp = self.get_clock().now().to_msg()
 				self.image_message.header.frame_id = self.camera_link_frame
 				self.frame_pub.publish(self.image_message)
+
+				# Publish Frame
+				t = geometry_msgs.msg.TransformStamped()
+
+				t.header.stamp = self.get_clock().now().to_msg()
+				t.header.frame_id = "wrist_camera_link" # To
+				t.child_frame_id = "marker_link" # From
+				t.transform.translation.x = msg.pose.position.x
+				t.transform.translation.y = msg.pose.position.y
+				t.transform.translation.z = msg.pose.position.z
+				t.transform.rotation.x = msg.pose.orientation.x
+				t.transform.rotation.y = msg.pose.orientation.y
+				t.transform.rotation.z = msg.pose.orientation.z
+				t.transform.rotation.w = msg.pose.orientation.w
+
+				self.br.sendTransform(t)
 		
 
 	# This function upload from JSON the intrinsic camera parameters k_mtx and dist_coeff
