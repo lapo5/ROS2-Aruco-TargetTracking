@@ -127,7 +127,7 @@ class ArucoPoseNode(Node):
 				
 				msg.header = Header()
 				msg.header.stamp = self.get_clock().now().to_msg()
-				msg.header.frame_id = self.marker_link_frame
+				msg.header.frame_id = self.camera_link_frame
 
 				# Translation
 				msg.pose.position.x = self.marker_pose[0][0][0][0]
