@@ -82,13 +82,9 @@ class ArucoPoseNode(Node):
 
 		# Publishers
 		self.pose_pub = self.create_publisher(PoseStamped, self.marker_pose_topic, 10)
-		self.pose_timer = self.create_timer(1.0/self.pose_topic_hz, self.publish_pose)
 
 		self.br = tf2_ros.TransformBroadcaster(self)
-		
-		# Estimation process
-		self.thread1 = threading.Thread(target=self.estimate_pose, daemon=True)
-		self.thread1.start()
+
 
 		self.get_logger().info("Marker estimator node ready")
 
@@ -120,55 +116,50 @@ class ArucoPoseNode(Node):
 
 	# This function publish the pose information from each frame
 	def publish_pose(self):
-		if len(self.marker_pose) != 0:
-			
-			msg = PoseStamped()
+		msg = PoseStamped()
 
-			# If the marker is in view
-			if self.marker_pose[2]:
-				
-				msg.header = Header()
-				msg.header.stamp = self.get_clock().now().to_msg()
-				msg.header.frame_id = self.camera_link_frame
+		msg.header = Header()
+		msg.header.stamp = self.get_clock().now().to_msg()
+		msg.header.frame_id = self.camera_link_frame
 
-				# Translation
-				msg.pose.position.x = self.marker_pose[0][0][0][0]
-				msg.pose.position.y = self.marker_pose[0][0][0][1]
-				msg.pose.position.z = self.marker_pose[0][0][0][2]
+		# Translation
+		msg.pose.position.x = self.marker_pose[0][0][0][0]
+		msg.pose.position.y = self.marker_pose[0][0][0][1]
+		msg.pose.position.z = self.marker_pose[0][0][0][2]
 
-				rot = R.from_rotvec([self.marker_pose[1][0][0][0], self.marker_pose[1][0][0][1], self.marker_pose[1][0][0][2]])
-				quat = rot.as_quat()
+		rot = R.from_rotvec([self.marker_pose[1][0][0][0], self.marker_pose[1][0][0][1], self.marker_pose[1][0][0][2]])
+		quat = rot.as_quat()
 
-				# short-Rodrigues (angle-axis)
-				msg.pose.orientation.x = quat[0]
-				msg.pose.orientation.y = quat[1]
-				msg.pose.orientation.z = quat[2]
-				msg.pose.orientation.w = quat[3]
+		# short-Rodrigues (angle-axis)
+		msg.pose.orientation.x = quat[0]
+		msg.pose.orientation.y = quat[1]
+		msg.pose.orientation.z = quat[2]
+		msg.pose.orientation.w = quat[3]
 
-				# Publish the message
-				self.pose_pub.publish(msg)
+		# Publish the message
+		self.pose_pub.publish(msg)
 
-				self.image_message = self.bridge.cv2_to_imgmsg(self.frame, encoding="mono8")
-				self.image_message.header = Header()
-				self.image_message.header.stamp = self.get_clock().now().to_msg()
-				self.image_message.header.frame_id = self.camera_link_frame
-				self.frame_pub.publish(self.image_message)
+		self.image_message = self.bridge.cv2_to_imgmsg(self.frame, encoding="mono8")
+		self.image_message.header = Header()
+		self.image_message.header.stamp = self.get_clock().now().to_msg()
+		self.image_message.header.frame_id = self.camera_link_frame
+		self.frame_pub.publish(self.image_message)
 
-				# Publish Frame
-				t = geometry_msgs.msg.TransformStamped()
+		# Publish Frame
+		t = geometry_msgs.msg.TransformStamped()
 
-				t.header.stamp = self.get_clock().now().to_msg()
-				t.header.frame_id = "wrist_camera_link" # To
-				t.child_frame_id = "marker_link" # From
-				t.transform.translation.x = msg.pose.position.x
-				t.transform.translation.y = msg.pose.position.y
-				t.transform.translation.z = msg.pose.position.z
-				t.transform.rotation.x = msg.pose.orientation.x
-				t.transform.rotation.y = msg.pose.orientation.y
-				t.transform.rotation.z = msg.pose.orientation.z
-				t.transform.rotation.w = msg.pose.orientation.w
+		t.header.stamp = self.get_clock().now().to_msg()
+		t.header.frame_id = "wrist_camera_link" # To
+		t.child_frame_id = "marker_link" # From
+		t.transform.translation.x = msg.pose.position.x
+		t.transform.translation.y = msg.pose.position.y
+		t.transform.translation.z = msg.pose.position.z
+		t.transform.rotation.x = msg.pose.orientation.x
+		t.transform.rotation.y = msg.pose.orientation.y
+		t.transform.rotation.z = msg.pose.orientation.z
+		t.transform.rotation.w = msg.pose.orientation.w
 
-				self.br.sendTransform(t)
+		self.br.sendTransform(t)
 		
 
 	# This function upload from JSON the intrinsic camera parameters k_mtx and dist_coeff
@@ -188,37 +179,38 @@ class ArucoPoseNode(Node):
 		else:
 			self.frame = frame
 
+		self.estimate_pose()
+
 
 	# This function detect and estimate the marker pose wrt the camera frame
 	def estimate_pose(self):
 
-		while True:
+		# If the 1st frame has not been received yet, return
+		if len(self.frame) != 0:
 
-			# If the 1st frame has not been received yet, return
-			while len(self.frame) != 0:
+			corners, ids, _ = aruco.detectMarkers(self.frame, self.aruco_dict, parameters = self.aruco_params)
 
-				corners, ids, _ = aruco.detectMarkers(self.frame, self.aruco_dict, parameters = self.aruco_params)
+			# If there are no ids, jump in order not to make the code crashes
+			if np.all(ids != None):
 
-				# If there are no ids, jump in order not to make the code crashes
-				if np.all(ids != None):
+				# Pose estimation for each marker
+				rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners, self.marker_side, 
+					self.cam_params["mtx"], self.cam_params["dist"])
 
-					# Pose estimation for each marker
-					rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners, self.marker_side, 
-						self.cam_params["mtx"], self.cam_params["dist"])
+				# (!!!) This line makes sense only if we use a single marker detection
+				self.marker_pose = [tvec, rvec, True]
+				self.publish_pose()
 
-					# (!!!) This line makes sense only if we use a single marker detection
-					self.marker_pose = [tvec, rvec, True]
+				# Draw the axis on the aruco markers
+				for i in range(0, ids.size):
+					aruco.drawAxis(self.frame, self.cam_params["mtx"], self.cam_params["dist"], rvec[i], tvec[i], 0.1)
+
+				# Draw a square on the markers perimeter
+				aruco.drawDetectedMarkers(self.frame, corners)
 
 
-					# Draw the axis on the aruco markers
-					for i in range(0, ids.size):
-						aruco.drawAxis(self.frame, self.cam_params["mtx"], self.cam_params["dist"], rvec[i], tvec[i], 0.1)
-
-					# Draw a square on the markers perimeter
-					aruco.drawDetectedMarkers(self.frame, corners)
-
-				else:
-					self.marker_pose = [0, 0, False]
+			else:
+				self.marker_pose = [0, 0, False]
 
 
 # Main loop function
