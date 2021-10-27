@@ -19,7 +19,7 @@ from cv_bridge import CvBridge
 import tf2_ros
 import geometry_msgs
 from std_msgs.msg import Header
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, TransformStamped
 from sensor_msgs.msg import Image
 
 from allied_vision_camera_interfaces.srv import CameraState
@@ -56,7 +56,7 @@ class ArucoPoseNode(Node):
 
 		self.declare_parameter("frames.camera_link", "parking_camera_link")
 		self.camera_link_frame = self.get_parameter("frames.camera_link").value
-
+		
 		self.declare_parameter("frames.marker_link", "marker_link")
 		self.marker_link_frame = self.get_parameter("frames.marker_link").value
 
@@ -81,7 +81,7 @@ class ArucoPoseNode(Node):
 		self.frame_sub = self.create_subscription(Image, self.raw_frame_topic, self.callback_frame, 1)
 
 		# Publishers
-		self.pose_pub = self.create_publisher(PoseStamped, self.marker_pose_topic, 10)
+		self.pose_pub = self.create_publisher(TransformStamped, self.marker_pose_topic, 10)
 
 		self.br = tf2_ros.TransformBroadcaster(self)
 
@@ -118,9 +118,11 @@ class ArucoPoseNode(Node):
 	def publish_pose(self):
 		msg = PoseStamped()
 
-		msg.header = Header()
+		msg.header = TransformStamped()
 		msg.header.stamp = self.get_clock().now().to_msg()
 		msg.header.frame_id = self.camera_link_frame
+
+		msg.child_frame_id = self.marker_link_frame
 
 		# Translation
 		msg.pose.position.x = self.marker_pose[0][0][0][0]
