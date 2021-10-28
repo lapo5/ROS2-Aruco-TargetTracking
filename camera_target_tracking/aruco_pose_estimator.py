@@ -116,27 +116,27 @@ class ArucoPoseNode(Node):
 
 	# This function publish the pose information from each frame
 	def publish_pose(self):
-		msg = PoseStamped()
+		msg = TransformStamped()
 
-		msg.header = TransformStamped()
+		msg.header = Header()
 		msg.header.stamp = self.get_clock().now().to_msg()
 		msg.header.frame_id = self.camera_link_frame
 
 		msg.child_frame_id = self.marker_link_frame
 
 		# Translation
-		msg.pose.position.x = self.marker_pose[0][0][0][0]
-		msg.pose.position.y = self.marker_pose[0][0][0][1]
-		msg.pose.position.z = self.marker_pose[0][0][0][2]
+		msg.transform.translation.x = self.marker_pose[0][0][0][0]
+		msg.transform.translation.y = self.marker_pose[0][0][0][1]
+		msg.transform.translation.z = self.marker_pose[0][0][0][2]
 
 		rot = R.from_rotvec([self.marker_pose[1][0][0][0], self.marker_pose[1][0][0][1], self.marker_pose[1][0][0][2]])
 		quat = rot.as_quat()
 
 		# short-Rodrigues (angle-axis)
-		msg.pose.orientation.x = quat[0]
-		msg.pose.orientation.y = quat[1]
-		msg.pose.orientation.z = quat[2]
-		msg.pose.orientation.w = quat[3]
+		msg.transform.rotation.x = quat[0]
+		msg.transform.rotation.y = quat[1]
+		msg.transform.rotation.z = quat[2]
+		msg.transform.rotation.w = quat[3]
 
 		# Publish the message
 		self.pose_pub.publish(msg)
@@ -148,20 +148,7 @@ class ArucoPoseNode(Node):
 		self.frame_pub.publish(self.image_message)
 
 		# Publish Frame
-		t = geometry_msgs.msg.TransformStamped()
-
-		t.header.stamp = self.get_clock().now().to_msg()
-		t.header.frame_id = "wrist_camera_link" # To
-		t.child_frame_id = "marker_link" # From
-		t.transform.translation.x = msg.pose.position.x
-		t.transform.translation.y = msg.pose.position.y
-		t.transform.translation.z = msg.pose.position.z
-		t.transform.rotation.x = msg.pose.orientation.x
-		t.transform.rotation.y = msg.pose.orientation.y
-		t.transform.rotation.z = msg.pose.orientation.z
-		t.transform.rotation.w = msg.pose.orientation.w
-
-		self.br.sendTransform(t)
+		self.br.sendTransform(msg)
 		
 
 	# This function upload from JSON the intrinsic camera parameters k_mtx and dist_coeff
