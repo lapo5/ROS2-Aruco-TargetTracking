@@ -6,7 +6,7 @@ aruco_pose_estimator:
 
     publishers:
       marker_image: /target_tracking/marker_image
-      marker_pose: /target_tracking/camera_to_marker_pose
+      marker_pose: /target_tracking/camera_to_marker_transform
 
     client_services:
       stop_camera: /arm_camera/get_cam_state
