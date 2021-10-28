@@ -17,6 +17,8 @@ from rclpy.node import Node
 from cv_bridge import CvBridge
 
 import tf2_ros
+from tf2_ros import TransformException
+from rclpy.duration import Duration
 import geometry_msgs
 from std_msgs.msg import Header
 from geometry_msgs.msg import PoseStamped, TransformStamped
@@ -39,7 +41,7 @@ class ArucoPoseNode(Node):
 		self.declare_parameter("publishers.marker_image", "/target_tracking/marker_image")
 		self.marker_image_topic = self.get_parameter("publishers.marker_image").value
 
-		self.declare_parameter("publishers.marker_pose", "/target_tracking/camera_to_marker_pose")
+		self.declare_parameter("publishers.marker_pose", "/target_tracking/camera_to_marker_transform")
 		self.marker_pose_topic = self.get_parameter("publishers.marker_pose").value
 
 		self.declare_parameter("pose_topic_hz", "30")
@@ -81,10 +83,9 @@ class ArucoPoseNode(Node):
 		self.frame_sub = self.create_subscription(Image, self.raw_frame_topic, self.callback_frame, 1)
 
 		# Publishers
-		self.pose_pub = self.create_publisher(TransformStamped, self.marker_pose_topic, 10)
+		self.transform_pub = self.create_publisher(TransformStamped, self.marker_pose_topic, 10)
 
 		self.br = tf2_ros.TransformBroadcaster(self)
-
 
 		self.get_logger().info("Marker estimator node ready")
 
@@ -117,8 +118,7 @@ class ArucoPoseNode(Node):
 	# This function publish the pose information from each frame
 	def publish_pose(self):
 		msg = TransformStamped()
-
-		msg.header = Header()
+		
 		msg.header.stamp = self.get_clock().now().to_msg()
 		msg.header.frame_id = self.camera_link_frame
 
@@ -139,15 +139,14 @@ class ArucoPoseNode(Node):
 		msg.transform.rotation.w = quat[3]
 
 		# Publish the message
-		self.pose_pub.publish(msg)
+		self.transform_pub.publish(msg)
 
 		self.image_message = self.bridge.cv2_to_imgmsg(self.frame, encoding="mono8")
 		self.image_message.header = Header()
 		self.image_message.header.stamp = self.get_clock().now().to_msg()
 		self.image_message.header.frame_id = self.camera_link_frame
 		self.frame_pub.publish(self.image_message)
-
-		# Publish Frame
+		
 		self.br.sendTransform(msg)
 		
 
@@ -174,32 +173,29 @@ class ArucoPoseNode(Node):
 	# This function detect and estimate the marker pose wrt the camera frame
 	def estimate_pose(self):
 
-		# If the 1st frame has not been received yet, return
-		if len(self.frame) != 0:
+		corners, ids, _ = aruco.detectMarkers(self.frame, self.aruco_dict, parameters = self.aruco_params)
 
-			corners, ids, _ = aruco.detectMarkers(self.frame, self.aruco_dict, parameters = self.aruco_params)
+		# If there are no ids, jump in order not to make the code crashes
+		if np.all(ids != None):
 
-			# If there are no ids, jump in order not to make the code crashes
-			if np.all(ids != None):
+			# Pose estimation for each marker
+			rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners, self.marker_side, 
+				self.cam_params["mtx"], self.cam_params["dist"])
 
-				# Pose estimation for each marker
-				rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners, self.marker_side, 
-					self.cam_params["mtx"], self.cam_params["dist"])
+			# (!!!) This line makes sense only if we use a single marker detection
+			self.marker_pose = [tvec, rvec, True]
+			self.publish_pose()
 
-				# (!!!) This line makes sense only if we use a single marker detection
-				self.marker_pose = [tvec, rvec, True]
-				self.publish_pose()
+			# Draw the axis on the aruco markers
+			for i in range(0, ids.size):
+				aruco.drawAxis(self.frame, self.cam_params["mtx"], self.cam_params["dist"], rvec[i], tvec[i], 0.1)
 
-				# Draw the axis on the aruco markers
-				for i in range(0, ids.size):
-					aruco.drawAxis(self.frame, self.cam_params["mtx"], self.cam_params["dist"], rvec[i], tvec[i], 0.1)
-
-				# Draw a square on the markers perimeter
-				aruco.drawDetectedMarkers(self.frame, corners)
+			# Draw a square on the markers perimeter
+			aruco.drawDetectedMarkers(self.frame, corners)
 
 
-			else:
-				self.marker_pose = [0, 0, False]
+		else:
+			self.marker_pose = [0, 0, False]
 
 
 # Main loop function
@@ -211,7 +207,6 @@ def main(args=None):
 		rclpy.spin(node)
 	except KeyboardInterrupt:
 		print('ARUCO Detector Node stopped cleanly')
-		
 	except BaseException:
 		print('Exception in ARUCO Detector:', file=sys.stderr)
 		raise
