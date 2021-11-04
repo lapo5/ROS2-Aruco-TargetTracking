@@ -210,6 +210,8 @@ class ArucoPoseNode(Node):
 		if len(corners) > 0:
 			# flatten the ArUco IDs list
 			ids = ids.flatten()
+
+			print(ids)
 			self.frame_color = cv2.cvtColor(self.frame, cv2.COLOR_GRAY2BGR)
 			# loop over the detected ArUCo corners
 			for (markerCorner, markerID) in zip(corners, ids):
