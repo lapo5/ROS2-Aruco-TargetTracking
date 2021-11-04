@@ -19,6 +19,7 @@ def generate_launch_description():
     for arg in sys.argv:
         if arg.startswith("project:="):
             project = arg.split(":=")[1]
+            print(project)
             params = os.path.join(get_package_share_directory("camera_target_tracking"), 'params', 'params_' + project + '.yaml')
 
 

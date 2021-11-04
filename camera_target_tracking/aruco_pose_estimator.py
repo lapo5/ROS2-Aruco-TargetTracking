@@ -73,7 +73,7 @@ class ArucoPoseNode(Node):
 		self.get_logger().info("Parameters successfully uploaded.")
 		self.frame = []
 		self.marker_pose = []
-		self.aruco_dict = aruco.Dictionary_get(aruco.DICT_5X5_250)
+		self.aruco_dict = aruco.Dictionary_get(aruco.DICT_7X7_250)
 		self.aruco_params = aruco.DetectorParameters_create()
 		self.bridge = CvBridge()
 
@@ -83,7 +83,14 @@ class ArucoPoseNode(Node):
 		self.frame_sub = self.create_subscription(Image, self.raw_frame_topic, self.callback_frame, 1)
 
 		# Publishers
-		self.transform_pub = self.create_publisher(TransformStamped, self.marker_pose_topic, 10)
+		self.transforms_pub = dict()
+
+		self.board = aruco.GridBoard_create(
+			markersX=3, 
+			markersY=3, 
+			markerLength=0.08, 
+			markerSeparation=0.04, 
+			dictionary=self.aruco_dict)
 
 		self.br = tf2_ros.TransformBroadcaster(self)
 
@@ -116,20 +123,26 @@ class ArucoPoseNode(Node):
 			self.get_logger().info("Service call failed %r" %(e,))
 
 	# This function publish the pose information from each frame
-	def publish_pose(self):
+	def publish_pose(self, marker_id, tvec, rvec):
+
+		if not marker_id in self.transforms_pub:
+			marker_pose_topic = self.marker_pose_topic + "/marker_" + str(marker_id)
+			self.transforms_pub[marker_id] = self.create_publisher(TransformStamped, marker_pose_topic, 1)
+		
 		msg = TransformStamped()
 		
 		msg.header.stamp = self.get_clock().now().to_msg()
 		msg.header.frame_id = self.camera_link_frame
 
-		msg.child_frame_id = self.marker_link_frame
+		marker_link_frame = self.marker_link_frame + "_" + str(marker_id)
+		msg.child_frame_id = marker_link_frame
 
 		# Translation
-		msg.transform.translation.x = self.marker_pose[0][0][0][0]
-		msg.transform.translation.y = self.marker_pose[0][0][0][1]
-		msg.transform.translation.z = self.marker_pose[0][0][0][2]
+		msg.transform.translation.x = tvec[0]
+		msg.transform.translation.y = tvec[1]
+		msg.transform.translation.z = tvec[2]
 
-		rot = R.from_rotvec([self.marker_pose[1][0][0][0], self.marker_pose[1][0][0][1], self.marker_pose[1][0][0][2]])
+		rot = R.from_rotvec([rvec[0], rvec[1], rvec[2]])
 		quat = rot.as_quat()
 
 		# short-Rodrigues (angle-axis)
@@ -139,9 +152,9 @@ class ArucoPoseNode(Node):
 		msg.transform.rotation.w = quat[3]
 
 		# Publish the message
-		self.transform_pub.publish(msg)
+		self.transforms_pub[marker_id].publish(msg)
 
-		self.image_message = self.bridge.cv2_to_imgmsg(self.frame, encoding="mono8")
+		self.image_message = self.bridge.cv2_to_imgmsg(self.frame_color, encoding="bgr8")
 		self.image_message.header = Header()
 		self.image_message.header.stamp = self.get_clock().now().to_msg()
 		self.image_message.header.frame_id = self.camera_link_frame
@@ -173,29 +186,61 @@ class ArucoPoseNode(Node):
 	# This function detect and estimate the marker pose wrt the camera frame
 	def estimate_pose(self):
 
-		corners, ids, _ = aruco.detectMarkers(self.frame, self.aruco_dict, parameters = self.aruco_params)
+		corners, ids, rejected = aruco.detectMarkers(self.frame, self.aruco_dict, parameters = self.aruco_params)
 
+		self.aruco_display(corners, ids)
 		# If there are no ids, jump in order not to make the code crashes
-		if np.all(ids != None):
+
+		
+		for (marker_corner, marker_id) in zip(corners, ids):
 
 			# Pose estimation for each marker
-			rvec, tvec, _ = aruco.estimatePoseSingleMarkers(corners, self.marker_side, 
+			rvec, tvec, _ = aruco.estimatePoseSingleMarkers(marker_corner, self.marker_side, 
 				self.cam_params["mtx"], self.cam_params["dist"])
 
-			# (!!!) This line makes sense only if we use a single marker detection
-			self.marker_pose = [tvec, rvec, True]
-			self.publish_pose()
+			self.publish_pose(marker_id[0], tvec[0][0], rvec[0][0])
+		
 
-			# Draw the axis on the aruco markers
-			for i in range(0, ids.size):
-				aruco.drawAxis(self.frame, self.cam_params["mtx"], self.cam_params["dist"], rvec[i], tvec[i], 0.1)
+		retval, rvec2, tvec2 = aruco.estimatePoseBoard(corners, ids, self.board, self.cam_params["mtx"], self.cam_params["dist"], rvec, tvec)
 
-			# Draw a square on the markers perimeter
-			aruco.drawDetectedMarkers(self.frame, corners)
+		if retval == 0:
+			self.publish_pose(0, tvec2[0][0], rvec2[0][0])
 
+	def aruco_display(self, corners, ids):
+		if len(corners) > 0:
+			# flatten the ArUco IDs list
+			ids = ids.flatten()
+			self.frame_color = cv2.cvtColor(self.frame, cv2.COLOR_GRAY2BGR)
+			# loop over the detected ArUCo corners
+			for (markerCorner, markerID) in zip(corners, ids):
 
-		else:
-			self.marker_pose = [0, 0, False]
+				rvec, tvec, _ = aruco.estimatePoseSingleMarkers(markerCorner, self.marker_side, 
+					self.cam_params["mtx"], self.cam_params["dist"])
+				# Draw the axis on the aruco markers
+				aruco.drawAxis(self.frame_color, self.cam_params["mtx"], self.cam_params["dist"], rvec, tvec, 0.1)
+
+				# extract the marker corners (which are always returned in
+				# top-left, top-right, bottom-right, and bottom-left order)
+				corners = markerCorner.reshape((4, 2))
+				(topLeft, topRight, bottomRight, bottomLeft) = corners
+				# convert each of the (x, y)-coordinate pairs to integers
+				topRight = (int(topRight[0]), int(topRight[1]))
+				bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
+				bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
+				topLeft = (int(topLeft[0]), int(topLeft[1]))
+
+				cv2.line(self.frame_color, topLeft, topRight, (0, 255, 0), 2)
+				cv2.line(self.frame_color, topRight, bottomRight, (0, 255, 0), 2)
+				cv2.line(self.frame_color, bottomRight, bottomLeft, (0, 255, 0), 2)
+				cv2.line(self.frame_color, bottomLeft, topLeft, (0, 255, 0), 2)
+				# compute and draw the center (x, y)-coordinates of the ArUco
+				# marker
+				cX = int((topLeft[0] + bottomRight[0]) / 2.0)
+				cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+				cv2.circle(self.frame_color, (cX, cY), 4, (0, 0, 255), -1)
+				# draw the ArUco marker ID on the image
+				cv2.putText(self.frame_color, str(markerID),(topLeft[0], topLeft[1] - 10), cv2.FONT_HERSHEY_SIMPLEX,
+					0.5, (0, 255, 0), 2)
 
 
 # Main loop function
