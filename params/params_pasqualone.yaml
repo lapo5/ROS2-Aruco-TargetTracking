@@ -6,7 +6,8 @@ aruco_detector:
 
     publishers:
       marker_image: /target_tracking/marker_image
-      marker_pose: /target_tracking/camera_to_marker_transform
+      marker_transform_prefix: /target_tracking/camera_to_marker_transform
+      marker_presence_prefix: /target_tracking/camera_to_marker_presence
 
     client_services:
       stop_camera: /parking_camera/get_cam_state

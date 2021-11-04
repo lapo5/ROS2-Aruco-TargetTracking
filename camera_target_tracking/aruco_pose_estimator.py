@@ -20,7 +20,7 @@ import tf2_ros
 from tf2_ros import TransformException
 from rclpy.duration import Duration
 import geometry_msgs
-from std_msgs.msg import Header
+from std_msgs.msg import Header, Bool
 from geometry_msgs.msg import PoseStamped, TransformStamped
 from sensor_msgs.msg import Image
 
@@ -41,8 +41,11 @@ class ArucoPoseNode(Node):
 		self.declare_parameter("publishers.marker_image", "/target_tracking/marker_image")
 		self.marker_image_topic = self.get_parameter("publishers.marker_image").value
 
-		self.declare_parameter("publishers.marker_pose", "/target_tracking/camera_to_marker_transform")
-		self.marker_pose_topic = self.get_parameter("publishers.marker_pose").value
+		self.declare_parameter("publishers.marker_transform_prefix", "/target_tracking/camera_to_marker_transform")
+		self.marker_pose_topic = self.get_parameter("publishers.marker_transform_prefix").value
+
+		self.declare_parameter("publishers.marker_presence_prefix", "/target_tracking/camera_to_marker_presence")
+		self.marker_presence_topic = self.get_parameter("publishers.marker_presence_prefix").value
 
 		self.declare_parameter("pose_topic_hz", "30")
 		self.pose_topic_hz = float(self.get_parameter("pose_topic_hz").value)
@@ -84,6 +87,9 @@ class ArucoPoseNode(Node):
 
 		# Publishers
 		self.transforms_pub = dict()
+		self.presence_pub = dict()
+
+		self.marker_ids_seen = set()
 
 		self.board = aruco.GridBoard_create(
 			markersX=3, 
@@ -122,47 +128,6 @@ class ArucoPoseNode(Node):
 		except Exception as e:
 			self.get_logger().info("Service call failed %r" %(e,))
 
-	# This function publish the pose information from each frame
-	def publish_pose(self, marker_id, tvec, rvec):
-
-		if not marker_id in self.transforms_pub:
-			marker_pose_topic = self.marker_pose_topic + "/marker_" + str(marker_id)
-			self.transforms_pub[marker_id] = self.create_publisher(TransformStamped, marker_pose_topic, 1)
-		
-		msg = TransformStamped()
-		
-		msg.header.stamp = self.get_clock().now().to_msg()
-		msg.header.frame_id = self.camera_link_frame
-
-		marker_link_frame = self.marker_link_frame + "_" + str(marker_id)
-		msg.child_frame_id = marker_link_frame
-
-		# Translation
-		msg.transform.translation.x = tvec[0]
-		msg.transform.translation.y = tvec[1]
-		msg.transform.translation.z = tvec[2]
-
-		rot = R.from_rotvec([rvec[0], rvec[1], rvec[2]])
-		quat = rot.as_quat()
-
-		# short-Rodrigues (angle-axis)
-		msg.transform.rotation.x = quat[0]
-		msg.transform.rotation.y = quat[1]
-		msg.transform.rotation.z = quat[2]
-		msg.transform.rotation.w = quat[3]
-
-		# Publish the message
-		self.transforms_pub[marker_id].publish(msg)
-
-		self.image_message = self.bridge.cv2_to_imgmsg(self.frame_color, encoding="bgr8")
-		self.image_message.header = Header()
-		self.image_message.header.stamp = self.get_clock().now().to_msg()
-		self.image_message.header.frame_id = self.camera_link_frame
-		self.frame_pub.publish(self.image_message)
-		
-		self.br.sendTransform(msg)
-		
-
 	# This function upload from JSON the intrinsic camera parameters k_mtx and dist_coeff
 	def get_cam_parameters(self):
 		with open(self.calibration_camera_path, "r") as readfile:
@@ -189,10 +154,12 @@ class ArucoPoseNode(Node):
 		corners, ids, rejected = aruco.detectMarkers(self.frame, self.aruco_dict, parameters = self.aruco_params)
 
 		self.aruco_display(corners, ids)
-		# If there are no ids, jump in order not to make the code crashes
 
+		currently_seen_ids = set()
 		
 		for (marker_corner, marker_id) in zip(corners, ids):
+
+			currently_seen_ids.add(marker_id)
 
 			# Pose estimation for each marker
 			rvec, tvec, _ = aruco.estimatePoseSingleMarkers(marker_corner, self.marker_side, 
@@ -205,6 +172,57 @@ class ArucoPoseNode(Node):
 
 		if retval == 0:
 			self.publish_pose(0, tvec2[0][0], rvec2[0][0])
+
+		for marker_not_seen in self.marker_ids_seen.difference(currently_seen_ids):
+			presence_msg = Bool()
+			presence_msg.data = False
+			self.presence_pub[marker_not_seen].publish(presence_msg)
+
+
+
+	# This function publish the pose information from each frame
+	def publish_pose(self, marker_id, tvec, rvec):
+
+		if not marker_id in self.marker_ids_seen:
+			self.marker_ids_seen.add(marker_id)
+			marker_pose_topic = self.marker_pose_topic + "/marker_" + str(marker_id)
+			self.transforms_pub[marker_id] = self.create_publisher(TransformStamped, marker_pose_topic, 1)
+
+			marker_pose_topic = self.marker_presence_topic + "/marker_" + str(marker_id)
+			self.presence_pub[marker_id] = self.create_publisher(TransformStamped, marker_pose_topic, 1)
+		
+		msg = TransformStamped()
+		
+		msg.header.stamp = self.get_clock().now().to_msg()
+		msg.header.frame_id = self.camera_link_frame
+
+		marker_link_frame = self.marker_link_frame + "_" + str(marker_id)
+		msg.child_frame_id = marker_link_frame
+
+		# Translation
+		msg.transform.translation.x = tvec[0]
+		msg.transform.translation.y = tvec[1]
+		msg.transform.translation.z = tvec[2]
+
+		rot = R.from_rotvec([rvec[0], rvec[1], rvec[2]])
+		quat = rot.as_quat()
+
+		# short-Rodrigues (angle-axis)
+		msg.transform.rotation.x = quat[0]
+		msg.transform.rotation.y = quat[1]
+		msg.transform.rotation.z = quat[2]
+		msg.transform.rotation.w = quat[3]
+
+		# Publish the message
+		self.transforms_pub[marker_id].publish(msg)
+
+		presence_msg = Bool()
+		presence_msg.data = True
+		self.presence_pub[marker_id].publish(presence_msg)
+
+		
+		self.br.sendTransform(msg)
+		
 
 	def aruco_display(self, corners, ids):
 		if len(corners) > 0:
