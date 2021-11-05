@@ -80,22 +80,15 @@ class ArucoPoseNode(Node):
 		self.frame = []
 		self.marker_pose = []
 
-		print(self.aruco_dict_name_)
-
 		if self.aruco_dict_name_ == "5X5_250":
-			print("5X5_250")
 			self.aruco_dict = aruco.Dictionary_get(aruco.DICT_5X5_250)
 		elif self.aruco_dict_name_ == "5X5_1000":
-			print("5X5_1000")
 			self.aruco_dict = aruco.Dictionary_get(aruco.DICT_5X5_1000)
 		elif self.aruco_dict_name_ == "7X7_250":
-			print("7X7_250")
 			self.aruco_dict = aruco.Dictionary_get(aruco.DICT_7X7_250)
 		elif self.aruco_dict_name_ == "7X7_1000":
-			print("7X7_1000")
 			self.aruco_dict = aruco.Dictionary_get(aruco.DICT_7X7_1000)
 		else:
-			print("5X5_250")
 			self.aruco_dict = aruco.Dictionary_get(aruco.DICT_5X5_250)
 
 		self.aruco_params = aruco.DetectorParameters_create()
@@ -174,9 +167,10 @@ class ArucoPoseNode(Node):
 
 		corners, ids, rejected = aruco.detectMarkers(self.frame, self.aruco_dict, parameters = self.aruco_params)
 
-		if ids is not None or len(ids) == 0:
+		self.get_logger().info('ids: {0}'.format(ids))
+		if ids is None or len(ids) == 0:
 			return 
-			
+
 		self.aruco_display(corners, ids)
 
 		currently_seen_ids = set()
