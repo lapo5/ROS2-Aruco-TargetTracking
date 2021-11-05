@@ -279,6 +279,13 @@ class ArucoPoseNode(Node):
 					0.5, (0, 255, 0), 2)
 
 
+
+			self.image_message = self.bridge.cv2_to_imgmsg(self.frame_color, encoding="bgr8")
+			self.image_message.header = Header()
+			self.image_message.header.stamp = self.get_clock().now().to_msg()
+			self.image_message.header.frame_id = self.camera_link_frame
+			self.frame_pub.publish(self.image_message)
+
 # Main loop function
 def main(args=None):
 	rclpy.init(args=args)
