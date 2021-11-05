@@ -167,33 +167,32 @@ class ArucoPoseNode(Node):
 
 		corners, ids, rejected = aruco.detectMarkers(self.frame, self.aruco_dict, parameters = self.aruco_params)
 
-		if ids is None or len(ids) == 0:
-			return 
+		self.currently_seen_ids = set()
+		if ids is not None and len(ids) > 0: 
 
-		self.aruco_display(corners, ids)
+			self.aruco_display(corners, ids)
+			
+			for (marker_corner, marker_id) in zip(corners, ids):
 
-		currently_seen_ids = set()
+				self.currently_seen_ids.add(marker_id[0])
+
+				# Pose estimation for each marker
+				rvec, tvec, _ = aruco.estimatePoseSingleMarkers(marker_corner, self.marker_side, 
+					self.cam_params["mtx"], self.cam_params["dist"])
+
+				self.publish_pose(marker_id[0], tvec[0][0], rvec[0][0])
+			
+
+			retval, rvec2, tvec2 = aruco.estimatePoseBoard(corners, ids, self.board, self.cam_params["mtx"], self.cam_params["dist"], rvec, tvec)
+
+			if retval > 0:
+				self.publish_pose(0, tvec2[0][0], rvec2[0][0])
 		
-		for (marker_corner, marker_id) in zip(corners, ids):
-
-			currently_seen_ids.add(marker_id[0])
-
-			# Pose estimation for each marker
-			rvec, tvec, _ = aruco.estimatePoseSingleMarkers(marker_corner, self.marker_side, 
-				self.cam_params["mtx"], self.cam_params["dist"])
-
-			self.publish_pose(marker_id[0], tvec[0][0], rvec[0][0])
-		
-
-		retval, rvec2, tvec2 = aruco.estimatePoseBoard(corners, ids, self.board, self.cam_params["mtx"], self.cam_params["dist"], rvec, tvec)
-
-		if retval > 0:
-			self.publish_pose(0, tvec2[0][0], rvec2[0][0])
-
-		for marker_not_seen in self.marker_ids_seen.difference(currently_seen_ids):
+		for marker_not_seen in self.marker_ids_seen.difference(self.currently_seen_ids):
 			presence_msg = Bool()
 			presence_msg.data = False
 			self.presence_pub[marker_not_seen].publish(presence_msg)
+
 
 
 
