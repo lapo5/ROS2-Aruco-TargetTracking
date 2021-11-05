@@ -174,6 +174,9 @@ class ArucoPoseNode(Node):
 
 		corners, ids, rejected = aruco.detectMarkers(self.frame, self.aruco_dict, parameters = self.aruco_params)
 
+		if ids is not None or len(ids) == 0:
+			return 
+			
 		self.aruco_display(corners, ids)
 
 		currently_seen_ids = set()
