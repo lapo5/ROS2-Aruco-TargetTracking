@@ -18,3 +18,6 @@ aruco_detector:
     frames: 
       camera_link: wrist_camera_link
       marker_link: marker_link
+
+    aruco:
+      dict: 5X5_250

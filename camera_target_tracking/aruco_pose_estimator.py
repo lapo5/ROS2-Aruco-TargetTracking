@@ -64,6 +64,9 @@ class ArucoPoseNode(Node):
 		
 		self.declare_parameter("frames.marker_link", "marker_link")
 		self.marker_link_frame = self.get_parameter("frames.marker_link").value
+		
+		self.declare_parameter("aruco.dict", "5X5_250")
+		self.aruco_dict_name_ = self.get_parameter("aruco.dict").value
 
 		package_share_directory = get_package_share_directory(self.camera_module)
 		# Path to store the calibration file
@@ -76,7 +79,23 @@ class ArucoPoseNode(Node):
 		self.get_logger().info("Parameters successfully uploaded.")
 		self.frame = []
 		self.marker_pose = []
-		self.aruco_dict = aruco.Dictionary_get(aruco.DICT_7X7_250)
+
+		if self.aruco_dict_name_ == "5X5_250":
+			print("5X5_250")
+			self.aruco_dict = aruco.Dictionary_get(aruco.DICT_5X5_250)
+		elif self.aruco_dict_name_ == "5X5_1000":
+			print("5X5_1000")
+			self.aruco_dict = aruco.Dictionary_get(aruco.DICT_5X5_1000)
+		elif self.aruco_dict_name_ == "7X7_250":
+			print("7X7_250")
+			self.aruco_dict = aruco.Dictionary_get(aruco.DICT_7X7_250)
+		elif self.aruco_dict_name_ == "7X7_1000":
+			print("7X7_1000")
+			self.aruco_dict = aruco.Dictionary_get(aruco.DICT_7X7_1000)
+		else:
+			print("5X5_250")
+			self.aruco_dict = aruco.Dictionary_get(aruco.DICT_5X5_250)
+
 		self.aruco_params = aruco.DetectorParameters_create()
 		self.bridge = CvBridge()
 
