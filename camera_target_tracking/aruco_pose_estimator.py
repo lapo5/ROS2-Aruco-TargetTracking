@@ -159,7 +159,7 @@ class ArucoPoseNode(Node):
 		
 		for (marker_corner, marker_id) in zip(corners, ids):
 
-			currently_seen_ids.add(marker_id)
+			currently_seen_ids.add(marker_id[0])
 
 			# Pose estimation for each marker
 			rvec, tvec, _ = aruco.estimatePoseSingleMarkers(marker_corner, self.marker_side, 
@@ -170,7 +170,7 @@ class ArucoPoseNode(Node):
 
 		retval, rvec2, tvec2 = aruco.estimatePoseBoard(corners, ids, self.board, self.cam_params["mtx"], self.cam_params["dist"], rvec, tvec)
 
-		if retval == 0:
+		if retval > 0:
 			self.publish_pose(0, tvec2[0][0], rvec2[0][0])
 
 		for marker_not_seen in self.marker_ids_seen.difference(currently_seen_ids):
@@ -188,8 +188,8 @@ class ArucoPoseNode(Node):
 			marker_pose_topic = self.marker_pose_topic + "/marker_" + str(marker_id)
 			self.transforms_pub[marker_id] = self.create_publisher(TransformStamped, marker_pose_topic, 1)
 
-			marker_pose_topic = self.marker_presence_topic + "/marker_" + str(marker_id)
-			self.presence_pub[marker_id] = self.create_publisher(TransformStamped, marker_pose_topic, 1)
+			marker_presence_topic = self.marker_presence_topic + "/marker_" + str(marker_id)
+			self.presence_pub[marker_id] = self.create_publisher(Bool, marker_presence_topic, 1)
 		
 		msg = TransformStamped()
 		
