@@ -14,6 +14,7 @@ def generate_launch_description():
 
     params_allied = os.path.join(get_package_share_directory("hal_allied_vision_camera"), 'params', 'params_pasqualone.yaml')
     params_aruco = os.path.join(get_package_share_directory("camera_target_tracking"), 'params', 'params_pasqualone.yaml')
+    
     for arg in sys.argv:
         if arg.startswith("project:="):
             project = arg.split(":=")[1]
@@ -26,12 +27,16 @@ def generate_launch_description():
             package='hal_allied_vision_camera',
             executable='av_node',
             name='av_node',
+            output={
+                    "stdout": "screen",
+                    "stderr": "screen",
+            },
             parameters=[params_allied],
         ),
         Node(
             package='camera_target_tracking',
             executable='aruco_detector',
-            name='aruco_pose_estimator',
+            name='aruco_detector',
             output={
                     "stdout": "screen",
                     "stderr": "screen",

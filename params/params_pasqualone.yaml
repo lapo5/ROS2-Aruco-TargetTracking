@@ -20,4 +20,4 @@ aruco_detector:
       marker_link: marker_link
 
     aruco:
-      dict: 7X7_250
+      dict: 7X7_1000
