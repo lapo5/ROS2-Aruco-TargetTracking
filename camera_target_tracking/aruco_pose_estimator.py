@@ -204,7 +204,7 @@ class ArucoPoseNode(Node):
                     if tvec2.shape[0] == 3:
                         tvec2_ = [tvec2[0][0], tvec2[1][0], tvec2[2][0]]
                         rvec2_ = [rvec2[0][0], rvec2[1][0], rvec2[2][0]]
-                        self.publish_pose(0, tvec2_, rvec2_)
+                        self.publish_pose(self.grid_output_id, tvec2_, rvec2_)
                     else:
                         self.publish_pose(self.grid_output_id, tvec2[0][0], rvec2[0][0])
         
