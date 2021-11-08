@@ -164,7 +164,6 @@ class ArucoPoseNode(Node):
 
     # This function store the received frame in a class attribute
     def callback_frame(self, msg):
-        self.get_logger().warn("callback_frame")
         frame = self.bridge.imgmsg_to_cv2(msg)
         if len(frame.shape) == 3:
             self.frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -179,7 +178,6 @@ class ArucoPoseNode(Node):
 
         corners, ids, rejected = aruco.detectMarkers(self.frame, self.aruco_dict, parameters = self.aruco_params)
         
-        self.get_logger().warn("ids: {0}".format(ids))
         self.currently_seen_ids = set()
         if ids is not None and len(ids) > 0: 
 
