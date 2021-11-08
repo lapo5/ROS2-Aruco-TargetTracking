@@ -171,9 +171,6 @@ class ArucoPoseNode(Node):
 
         corners, ids, rejected = aruco.detectMarkers(self.frame, self.aruco_dict, parameters = self.aruco_params)
 
-
-        self.get_logger().info("ids: {0}".format(ids))
-        
         self.currently_seen_ids = set()
         if ids is not None and len(ids) > 0: 
 
@@ -194,9 +191,6 @@ class ArucoPoseNode(Node):
 
             if retval > 0:
                 
-                self.get_logger().info("tvec2: {0}".format(tvec2))
-                self.get_logger().info("rvec2: {0}".format(rvec2))
-                self.get_logger().info("tvec2 size: {0}".format(tvec2.shape))
                 if tvec2.shape[0] == 3:
                     tvec2_ = [tvec2[0][0], tvec2[1][0], tvec2[2][0]]
                     rvec2_ = [rvec2[0][0], rvec2[1][0], rvec2[2][0]]
@@ -204,12 +198,11 @@ class ArucoPoseNode(Node):
                 else:
                     self.publish_pose(0, tvec2[0][0], rvec2[0][0])
         
+
         for marker_not_seen in self.marker_ids_seen.difference(self.currently_seen_ids):
             presence_msg = Bool()
             presence_msg.data = False
             self.presence_pub[marker_not_seen].publish(presence_msg)
-
-
 
 
     # This function publish the pose information from each frame
