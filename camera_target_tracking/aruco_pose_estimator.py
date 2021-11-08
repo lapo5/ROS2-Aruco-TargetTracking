@@ -177,7 +177,7 @@ class ArucoPoseNode(Node):
     def estimate_pose(self):
 
         corners, ids, rejected = aruco.detectMarkers(self.frame, self.aruco_dict, parameters = self.aruco_params)
-        
+
         self.currently_seen_ids = set()
         if ids is not None and len(ids) > 0: 
 
@@ -194,8 +194,8 @@ class ArucoPoseNode(Node):
                 if not self.search_for_grid or marker_id[0] not in self.grid_ids:
                     self.publish_pose(marker_id[0], tvec[0][0], rvec[0][0])
                 else:
-                    #self.get_logger().warn("Skipping id: {0}".format(marker_id[0]))
-                    pass
+                    self.get_logger().warn("Skipping id: {0}".format(marker_id[0]))
+                    
             
             if self.search_for_grid:
                 retval, rvec2, tvec2 = aruco.estimatePoseBoard(corners, ids, self.board, self.cam_params["mtx"], self.cam_params["dist"], rvec, tvec)

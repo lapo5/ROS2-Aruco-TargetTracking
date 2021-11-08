@@ -20,7 +20,7 @@ aruco_detector:
       marker_link: marker_link
 
     aruco:
-      dict: 7X7_1000
+      dict: 5X5_250
       
     grid:
       detect_grid: True
