@@ -21,3 +21,7 @@ aruco_detector:
 
     aruco:
       dict: 5X5_250
+
+    grid:
+      detect_grid: True
+      output_id: 10
