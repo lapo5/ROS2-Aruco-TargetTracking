@@ -98,6 +98,10 @@ class ArucoPoseNode(Node):
         self.declare_parameter("grid.output_id", "10")
         self.grid_output_id = int(self.get_parameter("grid.output_id").value)
 
+        self.declare_parameter("grid.grid_ids", "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]")
+        self.grid_ids = self.get_parameter("grid.grid_ids").value
+
+
         self.aruco_params = aruco.DetectorParameters_create()
         self.bridge = CvBridge()
 
@@ -180,14 +184,17 @@ class ArucoPoseNode(Node):
             self.aruco_display(corners, ids)
             
             for (marker_corner, marker_id) in zip(corners, ids):
+                
+                if not self.search_for_grid or marker_id[0] not in self.grid_ids:
+                    self.currently_seen_ids.add(marker_id[0])
 
-                self.currently_seen_ids.add(marker_id[0])
+                    # Pose estimation for each marker
+                    rvec, tvec, _ = aruco.estimatePoseSingleMarkers(marker_corner, self.marker_side, 
+                        self.cam_params["mtx"], self.cam_params["dist"])
 
-                # Pose estimation for each marker
-                rvec, tvec, _ = aruco.estimatePoseSingleMarkers(marker_corner, self.marker_side, 
-                    self.cam_params["mtx"], self.cam_params["dist"])
-
-                self.publish_pose(marker_id[0], tvec[0][0], rvec[0][0])
+                    self.publish_pose(marker_id[0], tvec[0][0], rvec[0][0])
+                else:
+                    self.get_logger().warn("Skipping id: {0}".format(marker_id[0]))
             
             if self.search_for_grid:
                 retval, rvec2, tvec2 = aruco.estimatePoseBoard(corners, ids, self.board, self.cam_params["mtx"], self.cam_params["dist"], rvec, tvec)
