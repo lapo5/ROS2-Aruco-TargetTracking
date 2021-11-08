@@ -92,8 +92,11 @@ class ArucoPoseNode(Node):
             self.aruco_dict = aruco.Dictionary_get(aruco.DICT_5X5_250)
 
         self.search_for_grid = False
-        self.declare_parameter("search_for_grid", "False")
-        self.search_for_grid = self.get_parameter("search_for_grid").value
+        self.declare_parameter("grid.detect_grid", "False")
+        self.search_for_grid = self.get_parameter("grid.detect_grid").value
+
+        self.declare_parameter("grid.output_id", "10")
+        self.grid_output_id = int(self.get_parameter("grid.output_id").value)
 
         self.aruco_params = aruco.DetectorParameters_create()
         self.bridge = CvBridge()
@@ -186,17 +189,17 @@ class ArucoPoseNode(Node):
 
                 self.publish_pose(marker_id[0], tvec[0][0], rvec[0][0])
             
+            if self.search_for_grid:
+                retval, rvec2, tvec2 = aruco.estimatePoseBoard(corners, ids, self.board, self.cam_params["mtx"], self.cam_params["dist"], rvec, tvec)
 
-            retval, rvec2, tvec2 = aruco.estimatePoseBoard(corners, ids, self.board, self.cam_params["mtx"], self.cam_params["dist"], rvec, tvec)
-
-            if retval > 0:
-                
-                if tvec2.shape[0] == 3:
-                    tvec2_ = [tvec2[0][0], tvec2[1][0], tvec2[2][0]]
-                    rvec2_ = [rvec2[0][0], rvec2[1][0], rvec2[2][0]]
-                    self.publish_pose(0, tvec2_, rvec2_)
-                else:
-                    self.publish_pose(0, tvec2[0][0], rvec2[0][0])
+                if retval > 0:
+                    
+                    if tvec2.shape[0] == 3:
+                        tvec2_ = [tvec2[0][0], tvec2[1][0], tvec2[2][0]]
+                        rvec2_ = [rvec2[0][0], rvec2[1][0], rvec2[2][0]]
+                        self.publish_pose(0, tvec2_, rvec2_)
+                    else:
+                        self.publish_pose(self.grid_output_id, tvec2[0][0], rvec2[0][0])
         
 
         for marker_not_seen in self.marker_ids_seen.difference(self.currently_seen_ids):
