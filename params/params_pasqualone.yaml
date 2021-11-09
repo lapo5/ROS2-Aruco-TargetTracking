@@ -15,6 +15,8 @@ aruco_detector:
     subscribers:
       raw_frame: /parking_camera/raw_frame
 
+    camera_optic_length: 70mm
+
     frames: 
       camera_link: parking_camera_link
       marker_link: marker_link
