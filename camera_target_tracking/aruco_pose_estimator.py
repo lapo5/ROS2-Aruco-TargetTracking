@@ -68,9 +68,17 @@ class ArucoPoseNode(Node):
         self.declare_parameter("aruco.dict", "5X5_250")
         self.aruco_dict_name_ = self.get_parameter("aruco.dict").value
 
+        self.declare_parameter("camera_optic_length", "auto")
+        self.camera_optic_length = self.get_parameter("camera_optic_length").value
+
         package_share_directory = get_package_share_directory(self.camera_module)
-        # Path to store the calibration file
-        self.calibration_camera_path = package_share_directory + "/calibration/calib_params.json"
+        if self.camera_optic_length == "auto":
+            # Path to store the calibration file
+            self.calibration_camera_path = package_share_directory + "/calibration/calib_params.json"
+        else:
+            # Path to store the calibration file
+            self.calibration_camera_path = package_share_directory + "/calibration/calib_params_" + self.camera_optic_length + ".json"
+
 
         # Class attributes
         self.cam_params = dict()
