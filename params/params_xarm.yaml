@@ -22,7 +22,7 @@ aruco_detector:
     aruco:
       dict: 5X5_250
 
-    camera_optic_length: auto
+    camera_optic_length: 4mm
 
     grid:
       detect_grid: True
