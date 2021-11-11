@@ -4,6 +4,8 @@ aruco_detector:
     pose_topic_hz: 30
     marker_side: 0.1
 
+    use_custom_marker_side_dict: True
+
     publishers:
       marker_image: /target_tracking/marker_image
       marker_transform_prefix: /target_tracking/camera_to_marker_transform
