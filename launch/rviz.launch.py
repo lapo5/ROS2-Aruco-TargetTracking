@@ -37,7 +37,5 @@ def generate_launch_description():
             name='static_transform_publisher',
             output='screen',
             arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'world', camera_link]
-
-
         )
 ])
