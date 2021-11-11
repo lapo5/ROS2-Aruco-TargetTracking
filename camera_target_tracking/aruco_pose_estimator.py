@@ -88,7 +88,9 @@ class ArucoPoseNode(Node):
         self.frame = []
         self.marker_pose = []
 
-        if self.aruco_dict_name_ == "5X5_250":
+        if self.aruco_dict_name_ == "5X5_100":
+            self.aruco_dict = aruco.Dictionary_get(aruco.DICT_5X5_100)
+        elif self.aruco_dict_name_ == "5X5_250":
             self.aruco_dict = aruco.Dictionary_get(aruco.DICT_5X5_250)
         elif self.aruco_dict_name_ == "5X5_1000":
             self.aruco_dict = aruco.Dictionary_get(aruco.DICT_5X5_1000)

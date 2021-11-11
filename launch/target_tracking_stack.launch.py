@@ -14,12 +14,14 @@ def generate_launch_description():
 
     params_allied = os.path.join(get_package_share_directory("hal_allied_vision_camera"), 'params', 'params_pasqualone.yaml')
     params_aruco = os.path.join(get_package_share_directory("camera_target_tracking"), 'params', 'params_pasqualone.yaml')
+    params_aruco_filter = os.path.join(get_package_share_directory("aruco_pose_filter"), 'params', 'params_pasqualone.yaml')
     
     for arg in sys.argv:
         if arg.startswith("project:="):
             project = arg.split(":=")[1]
             params_allied = os.path.join(get_package_share_directory("hal_allied_vision_camera"), 'params', 'params_' + project + '.yaml')
             params_aruco = os.path.join(get_package_share_directory("camera_target_tracking"), 'params', 'params_' + project + '.yaml')
+            params_aruco_filter = os.path.join(get_package_share_directory("aruco_pose_filter"), 'params', 'params_' + project + '.yaml')
 
 
     return LaunchDescription([
@@ -27,10 +29,6 @@ def generate_launch_description():
             package='hal_allied_vision_camera',
             executable='av_node',
             name='av_node',
-            output={
-                    "stdout": "screen",
-                    "stderr": "screen",
-            },
             parameters=[params_allied],
         ),
         Node(
@@ -42,5 +40,25 @@ def generate_launch_description():
                     "stderr": "screen",
             },
             parameters=[params_aruco],
+        ),
+        Node(
+            package='aruco_pose_filter',
+            executable='pose_filter',
+            name='pose_filter',
+            output={
+                    "stdout": "screen",
+                    "stderr": "screen",
+            },
+            parameters=[params_aruco_filter, {'marker_id': '69'}],
+        ),
+        Node(
+            package='aruco_pose_filter',
+            executable='pose_filter',
+            name='pose_filter',
+            output={
+                    "stdout": "screen",
+                    "stderr": "screen",
+            },
+            parameters=[params_aruco_filter, {'marker_id': '0'}],
         ),
 ])
