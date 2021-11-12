@@ -53,6 +53,14 @@ class ArucoPoseNode(Node):
         self.declare_parameter("marker_side", "0.1")
         self.marker_side = float(self.get_parameter("marker_side").value)
 
+        self.use_custom_marker_side_dict = False
+        self.declare_parameter("use_custom_marker_side_dict", "True")
+        self.use_custom_marker_side_dict = self.get_parameter("use_custom_marker_side_dict").value
+
+        self.custom_marker_sides = dict()
+        self.custom_marker_sides[69] = 0.1
+        self.custom_marker_sides[0] = 0.03
+
         self.declare_parameter("subscribers.raw_frame", "/parking_camera/raw_frame")
         self.raw_frame_topic = self.get_parameter("subscribers.raw_frame").value
 
@@ -198,8 +206,13 @@ class ArucoPoseNode(Node):
                 
                 self.currently_seen_ids.add(marker_id[0])
 
+                marker_side = self.marker_side
+
+                if self.use_custom_marker_side_dict and marker_id[0] in self.custom_marker_sides:
+                    marker_side = self.custom_marker_sides[marker_id[0]]
+
                 # Pose estimation for each marker
-                rvec, tvec, _ = aruco.estimatePoseSingleMarkers(marker_corner, self.marker_side, 
+                rvec, tvec, _ = aruco.estimatePoseSingleMarkers(marker_corner, marker_side, 
                     self.cam_params["mtx"], self.cam_params["dist"])
 
                 if not self.search_for_grid or marker_id[0] not in self.grid_ids:
