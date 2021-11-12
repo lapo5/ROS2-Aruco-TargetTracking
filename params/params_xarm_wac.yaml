@@ -1,0 +1,32 @@
+aruco_detector:
+  ros__parameters:
+    camera_module: hal_allied_vision_camera
+    pose_topic_hz: 30
+    marker_side: 0.1
+
+    use_custom_marker_side_dict: True
+
+    publishers:
+      marker_image: /wac/target_tracking/marker_image
+      marker_transform_prefix: /wac/target_tracking/camera_to_marker_transform
+      marker_presence_prefix: /wac/target_tracking/camera_to_marker_presence
+
+    client_services:
+      stop_camera: /wac_camera/get_cam_state
+
+    subscribers:
+      raw_frame: /wac_camera/raw_frame
+
+    frames: 
+      camera_link: wac_camera_link
+      marker_link: wac_marker_link
+
+    aruco:
+      dict: 5X5_100
+
+    camera_optic_length: 4mm
+
+    grid:
+      detect_grid: False
+      output_id: 10
+      grid_ids: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
