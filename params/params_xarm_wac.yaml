@@ -4,12 +4,13 @@ aruco_detector:
     pose_topic_hz: 30
     marker_side: 0.1
 
-    use_custom_marker_side_dict: True
+    custom_marker_side_dict:
+      enable: True
 
     publishers:
       marker_image: /wac/target_tracking/marker_image
-      marker_transform_prefix: /wac/target_tracking/camera_to_marker_transform
-      marker_presence_prefix: /wac/target_tracking/camera_to_marker_presence
+      marker_transform_prefix: /wac/target_tracking/camera_to_marker_transform/marker_
+      marker_presence_prefix: /wac/target_tracking/camera_to_marker_presence/marker_
 
     client_services:
       stop_camera: /wac_camera/get_cam_state
@@ -19,7 +20,7 @@ aruco_detector:
 
     frames: 
       camera_link: wac_camera_link
-      marker_link: wac_marker_link
+      marker_link_prefix: wac_marker_link_
 
     aruco:
       dict: 5X5_100

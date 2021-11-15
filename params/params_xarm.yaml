@@ -4,12 +4,22 @@ aruco_detector:
     pose_topic_hz: 30
     marker_side: 0.1
 
-    use_custom_marker_side_dict: True
+    # Specify different side for each marker id. If enable False or id not in custom dict, the node 
+    # will use the marker_side specified above
+    custom_marker_side_dict:
+      enable: True
+      number_of_entries: 2
+      entry_0:
+        id: 69
+        marker_side: 0.1
+      entry_1:
+        id: 0
+        marker_side: 0.03
 
     publishers:
       marker_image: /target_tracking/marker_image
-      marker_transform_prefix: /target_tracking/camera_to_marker_transform
-      marker_presence_prefix: /target_tracking/camera_to_marker_presence
+      marker_transform_prefix: /target_tracking/camera_to_marker_transform/marker_
+      marker_presence_prefix: /target_tracking/camera_to_marker_presence/marker_
 
     client_services:
       stop_camera: /arm_camera/get_cam_state
@@ -19,7 +29,7 @@ aruco_detector:
 
     frames: 
       camera_link: wrist_camera_link
-      marker_link: marker_link
+      marker_link_prefix: marker_link_
 
     aruco:
       dict: 5X5_100

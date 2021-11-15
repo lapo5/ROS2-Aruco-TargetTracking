@@ -10,7 +10,6 @@
   <depend>rclpy</depend>
   <depend>sensor_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>flir_ptu_d46_interfaces</depend>
   <depend>allied_vision_camera_interfaces</depend>
 
   <export>

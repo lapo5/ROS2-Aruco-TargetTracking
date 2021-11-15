@@ -32,19 +32,22 @@ from ament_index_python.packages import get_package_share_directory
 # Class definition fo the estimator
 class ArucoPoseNode(Node):
     def __init__(self):
-        super().__init__("aruco_pose_estimator")
+        super().__init__("aruco_detector")
         self.get_logger().info("Marker estimator node is awake...")
 
         self.declare_parameter("camera_module", "hal_allied_vision_camera")
         self.camera_module = self.get_parameter("camera_module").value
 
+        self.declare_parameter("publish_image_feedback", "True")
+        self.publish_image_feedback = self.get_parameter("publish_image_feedback").value
+
         self.declare_parameter("publishers.marker_image", "/target_tracking/marker_image")
         self.marker_image_topic = self.get_parameter("publishers.marker_image").value
 
-        self.declare_parameter("publishers.marker_transform_prefix", "/target_tracking/camera_to_marker_transform")
+        self.declare_parameter("publishers.marker_transform_prefix", "/target_tracking/camera_to_marker_transform/marker_")
         self.marker_pose_topic = self.get_parameter("publishers.marker_transform_prefix").value
 
-        self.declare_parameter("publishers.marker_presence_prefix", "/target_tracking/camera_to_marker_presence")
+        self.declare_parameter("publishers.marker_presence_prefix", "/target_tracking/camera_to_marker_presence/marker_")
         self.marker_presence_topic = self.get_parameter("publishers.marker_presence_prefix").value
 
         self.declare_parameter("pose_topic_hz", "30")
@@ -54,12 +57,27 @@ class ArucoPoseNode(Node):
         self.marker_side = float(self.get_parameter("marker_side").value)
 
         self.use_custom_marker_side_dict = False
-        self.declare_parameter("use_custom_marker_side_dict", "True")
-        self.use_custom_marker_side_dict = self.get_parameter("use_custom_marker_side_dict").value
+        self.declare_parameter("custom_marker_side_dict.enable", "True")
+        self.use_custom_marker_side_dict = self.get_parameter("custom_marker_side_dict.enable").value
 
         self.custom_marker_sides = dict()
-        self.custom_marker_sides[69] = 0.1
-        self.custom_marker_sides[0] = 0.03
+        #self.custom_marker_sides[69] = 0.1
+        #self.custom_marker_sides[0] = 0.03
+        if self.use_custom_marker_side_dict:
+
+            self.declare_parameter("custom_marker_side_dict.number_of_entries", "0")
+            self.custom_dict_n_ = int(self.get_parameter("custom_marker_side_dict.number_of_entries").value)
+
+            for i in range (0, self.custom_dict_n_):
+                entry_name = "custom_marker_side_dict.entry_" + str(i)
+                self.declare_parameter(entry_name + ".id", "0")
+                m_id = int(self.get_parameter(entry_name + ".id").value)
+                
+                self.declare_parameter(entry_name + ".marker_side", "0.0")
+                m_side = float(self.get_parameter(entry_name + ".marker_side").value)
+                self.custom_marker_sides[m_id] = m_side
+
+        print(self.custom_marker_sides)
 
         self.declare_parameter("subscribers.raw_frame", "/parking_camera/raw_frame")
         self.raw_frame_topic = self.get_parameter("subscribers.raw_frame").value
@@ -70,10 +88,10 @@ class ArucoPoseNode(Node):
         self.declare_parameter("frames.camera_link", "parking_camera_link")
         self.camera_link_frame = self.get_parameter("frames.camera_link").value
         
-        self.declare_parameter("frames.marker_link", "marker_link")
-        self.marker_link_frame = self.get_parameter("frames.marker_link").value
+        self.declare_parameter("frames.marker_link_prefix", "marker_link_")
+        self.marker_link_frame_prefix_ = self.get_parameter("frames.marker_link_prefix").value
         
-        self.declare_parameter("aruco.dict", "5X5_250")
+        self.declare_parameter("aruco.dict", "5X5_100")
         self.aruco_dict_name_ = self.get_parameter("aruco.dict").value
 
         self.declare_parameter("camera_optic_length", "auto")
@@ -200,7 +218,8 @@ class ArucoPoseNode(Node):
         self.currently_seen_ids = set()
         if ids is not None and len(ids) > 0: 
 
-            self.aruco_display(corners, ids)
+            if self.publish_image_feedback:
+                self.aruco_display(corners, ids)
             
             for (marker_corner, marker_id) in zip(corners, ids):
                 
@@ -246,10 +265,10 @@ class ArucoPoseNode(Node):
 
         if not marker_id in self.marker_ids_seen:
             self.marker_ids_seen.add(marker_id)
-            marker_pose_topic = self.marker_pose_topic + "/marker_" + str(marker_id)
+            marker_pose_topic = self.marker_pose_topic + str(marker_id)
             self.transforms_pub[marker_id] = self.create_publisher(TransformStamped, marker_pose_topic, 1)
 
-            marker_presence_topic = self.marker_presence_topic + "/marker_" + str(marker_id)
+            marker_presence_topic = self.marker_presence_topic + str(marker_id)
             self.presence_pub[marker_id] = self.create_publisher(Bool, marker_presence_topic, 1)
         
         msg = TransformStamped()
@@ -257,7 +276,7 @@ class ArucoPoseNode(Node):
         msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = self.camera_link_frame
 
-        marker_link_frame = self.marker_link_frame + "_" + str(marker_id)
+        marker_link_frame = self.marker_link_frame_prefix_ + str(marker_id)
         msg.child_frame_id = marker_link_frame
 
         # Translation

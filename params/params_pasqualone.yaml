@@ -4,12 +4,13 @@ aruco_detector:
     pose_topic_hz: 30
     marker_side: 0.1
 
-    use_custom_marker_side_dict: False
+    custom_marker_side_dict:
+      enable: False
 
     publishers:
       marker_image: /target_tracking/marker_image
-      marker_transform_prefix: /target_tracking/camera_to_marker_transform
-      marker_presence_prefix: /target_tracking/camera_to_marker_presence
+      marker_transform_prefix: /target_tracking/camera_to_marker_transform/marker_
+      marker_presence_prefix: /target_tracking/camera_to_marker_presence/marker_
 
     client_services:
       stop_camera: /parking_camera/get_cam_state
@@ -17,14 +18,14 @@ aruco_detector:
     subscribers:
       raw_frame: /parking_camera/raw_frame
 
-    camera_optic_length: 70mm
-
     frames: 
       camera_link: parking_camera_link
-      marker_link: marker_link
+      marker_link_prefix: marker_link_
 
     aruco:
       dict: 5X5_250
+
+    camera_optic_length: 70mm
       
     grid:
       detect_grid: True
