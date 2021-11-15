@@ -33,7 +33,6 @@ from ament_index_python.packages import get_package_share_directory
 class ArucoPoseNode(Node):
     def __init__(self):
         super().__init__("aruco_detector")
-        self.get_logger().info("Marker estimator node is awake...")
 
         self.declare_parameter("camera_module", "hal_allied_vision_camera")
         self.camera_module = self.get_parameter("camera_module").value
@@ -77,8 +76,6 @@ class ArucoPoseNode(Node):
                 m_side = float(self.get_parameter(entry_name + ".marker_side").value)
                 self.custom_marker_sides[m_id] = m_side
 
-        print(self.custom_marker_sides)
-
         self.declare_parameter("subscribers.raw_frame", "/parking_camera/raw_frame")
         self.raw_frame_topic = self.get_parameter("subscribers.raw_frame").value
 
@@ -108,9 +105,8 @@ class ArucoPoseNode(Node):
 
         # Class attributes
         self.cam_params = dict()
-        self.get_logger().info("Uploading intrinsic parameters from " + self.calibration_camera_path)
+        self.get_logger().info("[Aruco Pose Estimator] Uploading intrinsic parameters from " + self.calibration_camera_path)
         self.get_cam_parameters()
-        self.get_logger().info("Parameters successfully uploaded.")
         self.frame = []
         self.marker_pose = []
 
@@ -161,7 +157,7 @@ class ArucoPoseNode(Node):
 
         self.br = tf2_ros.TransformBroadcaster(self)
 
-        self.get_logger().info("Marker estimator node ready")
+        self.get_logger().info("[Aruco Pose Estimator] node ready")
 
 
     # Destructor function: call the stop service and disarm the camera regularly
@@ -185,7 +181,7 @@ class ArucoPoseNode(Node):
     def callback_call_stop_service(self, future, stop_flag):
         try:
             response = future.result()
-            self.get_logger().info("Camera state has been set: " + str(response.cam_state))
+            self.get_logger().info("[Aruco Pose Estimator] Camera state has been set: " + str(response.cam_state))
         except Exception as e:
             self.get_logger().info("Service call failed %r" %(e,))
 
@@ -357,9 +353,9 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        print('ARUCO Detector Node stopped cleanly')
+        node.get_logger().info('[Aruco Pose Estimator] stopped cleanly')
     except BaseException:
-        print('Exception in ARUCO Detector:', file=sys.stderr)
+        node.get_logger().info('[Aruco Pose Estimator] Exception:', file=sys.stderr)
         raise
     finally:
         # Destroy the node explicitly
