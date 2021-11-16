@@ -3,9 +3,18 @@ aruco_detector:
     camera_module: hal_allied_vision_camera
     pose_topic_hz: 30
     marker_side: 0.1
-
+    
+    # Specify different side for each marker id. If enable False or id not in custom dict, the node 
+    # will use the marker_side specified above
     custom_marker_side_dict:
       enable: True
+      number_of_entries: 2
+      entry_0:
+        id: 69
+        marker_side: 0.1
+      entry_1:
+        id: 0
+        marker_side: 0.03
 
     publishers:
       marker_image: /wac/target_tracking/marker_image
