@@ -7,8 +7,6 @@ import numpy as np
 import cv2
 from cv2 import aruco
 from scipy.spatial.transform import Rotation as R
-
-import threading
 from functools import partial
 
 import rclpy
@@ -17,11 +15,8 @@ from rclpy.node import Node
 from cv_bridge import CvBridge
 
 import tf2_ros
-from tf2_ros import TransformException
-from rclpy.duration import Duration
-import geometry_msgs
 from std_msgs.msg import Header, Bool
-from geometry_msgs.msg import PoseStamped, TransformStamped
+from geometry_msgs.msg import TransformStamped
 from sensor_msgs.msg import Image
 
 from allied_vision_camera_interfaces.srv import CameraState
