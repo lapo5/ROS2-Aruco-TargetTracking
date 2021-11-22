@@ -22,6 +22,8 @@ def generate_launch_description():
                 camera_link = 'wrist_camera_link'
             elif project == 'pasqualone':
                 camera_link = 'parking_camera_link'
+            elif project == 'xarm_wac':
+                camera_link = 'wac_camera_link'
     return LaunchDescription([
         
         Node(
