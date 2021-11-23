@@ -8,13 +8,16 @@ aruco_detector:
     # will use the marker_side specified above
     custom_marker_side_dict:
       enable: True
-      number_of_entries: 2
+      number_of_entries: 3
       entry_0:
         id: 69
         marker_side: 0.1
       entry_1:
         id: 0
         marker_side: 0.03
+      entry_2:
+        id: 1
+        marker_side: 0.05
 
     publishers:
       marker_image: /target_tracking/marker_image
