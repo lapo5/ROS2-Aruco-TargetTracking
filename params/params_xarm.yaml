@@ -16,6 +16,8 @@ aruco_detector:
         id: 0
         marker_side: 0.03
 
+    publish_image_feedback: False
+
     publishers:
       marker_image: /target_tracking/marker_image
       marker_transform_prefix: /target_tracking/camera_to_marker_transform/marker_

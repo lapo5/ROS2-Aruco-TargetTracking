@@ -152,6 +152,10 @@ class ArucoPoseNode(Node):
 
         self.br = tf2_ros.TransformBroadcaster(self)
 
+        rot = R.from_euler('ZYX', [90.0, 0.0, 180.0], degrees=True)
+        rot_m = rot.as_matrix()
+        self.get_logger().info("[Aruco Pose Estimator]  ROT: {0}".format(rot_m))
+
         self.get_logger().info("[Aruco Pose Estimator] node ready")
 
 
@@ -231,6 +235,7 @@ class ArucoPoseNode(Node):
                     self.get_logger().warn("Skipping id: {0}".format(marker_id[0]))
                     
             
+            self.get_logger().info("[AV Camera] publishing_poses")
             if self.search_for_grid:
                 retval, rvec2, tvec2 = aruco.estimatePoseBoard(corners, ids, self.board, self.cam_params["mtx"], self.cam_params["dist"], rvec, tvec)
 
