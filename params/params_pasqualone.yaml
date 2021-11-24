@@ -2,7 +2,8 @@ aruco_detector:
   ros__parameters:
     camera_module: hal_allied_vision_camera
     pose_topic_hz: 30
-    marker_side: 0.25
+    #marker_side: 0.25
+    marker_side: 0.07
 
     custom_marker_side_dict:
       enable: False
