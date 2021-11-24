@@ -125,7 +125,7 @@ class ArucoPoseNode(Node):
         self.declare_parameter("grid.output_id", "10")
         self.grid_output_id = int(self.get_parameter("grid.output_id").value)
 
-        self.declare_parameter("grid.grid_ids", "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]")
+        self.declare_parameter("grid.grid_ids", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
         self.grid_ids = self.get_parameter("grid.grid_ids").value
 
 
@@ -218,7 +218,7 @@ class ArucoPoseNode(Node):
             
             for (marker_corner, marker_id) in zip(corners, ids):
                 
-                self.currently_seen_ids.add(marker_id[0])
+                self.currently_seen_ids.add(int(marker_id[0]))
 
                 marker_side = self.marker_side
 
@@ -231,11 +231,8 @@ class ArucoPoseNode(Node):
 
                 if not self.search_for_grid or marker_id[0] not in self.grid_ids:
                     self.publish_pose(marker_id[0], tvec[0][0], rvec[0][0])
-                else:
-                    self.get_logger().warn("Skipping id: {0}".format(marker_id[0]))
                     
             
-            self.get_logger().info("[AV Camera] publishing_poses")
             if self.search_for_grid:
                 retval, rvec2, tvec2 = aruco.estimatePoseBoard(corners, ids, self.board, self.cam_params["mtx"], self.cam_params["dist"], rvec, tvec)
 
