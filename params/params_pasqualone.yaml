@@ -2,8 +2,7 @@ aruco_detector:
   ros__parameters:
     camera_module: hal_allied_vision_camera
     pose_topic_hz: 30
-    #marker_side: 0.25
-    marker_side: 0.07
+    marker_side: 0.25
 
     custom_marker_side_dict:
       enable: False
@@ -32,3 +31,7 @@ aruco_detector:
       detect_grid: True
       output_id: 20
       grid_ids: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+      marker_length: 0.07
+      marker_separation: 0.04
+      rows: 3
+      cols: 3

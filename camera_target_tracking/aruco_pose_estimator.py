@@ -125,6 +125,18 @@ class ArucoPoseNode(Node):
         self.declare_parameter("grid.output_id", "10")
         self.grid_output_id = int(self.get_parameter("grid.output_id").value)
 
+        self.declare_parameter("grid.marker_length", "0.07")
+        self.grid_marker_length = float(self.get_parameter("grid.marker_length").value)
+
+        self.declare_parameter("grid.marker_separation", "0.04")
+        self.grid_marker_separation = float(self.get_parameter("grid.marker_separation").value)
+
+        self.declare_parameter("grid.rows", "3")
+        self.grid_rows = int(self.get_parameter("grid.rows").value)
+
+        self.declare_parameter("grid.cols", "3")
+        self.grid_cols = int(self.get_parameter("grid.cols").value)
+
         self.declare_parameter("grid.grid_ids", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
         self.grid_ids = self.get_parameter("grid.grid_ids").value
 
@@ -144,10 +156,10 @@ class ArucoPoseNode(Node):
         self.marker_ids_seen = set()
 
         self.board = aruco.GridBoard_create(
-            markersX=3, 
-            markersY=3, 
-            markerLength=0.08, 
-            markerSeparation=0.04, 
+            markersX=self.grid_rows, 
+            markersY=self.grid_cols, 
+            markerLength=self.grid_marker_length, 
+            markerSeparation=self.grid_marker_separation, 
             dictionary=self.aruco_dict)
 
         self.br = tf2_ros.TransformBroadcaster(self)
