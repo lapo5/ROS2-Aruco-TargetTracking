@@ -151,11 +151,6 @@ class ArucoPoseNode(Node):
             dictionary=self.aruco_dict)
 
         self.br = tf2_ros.TransformBroadcaster(self)
-
-        rot = R.from_euler('ZYX', [90.0, 0.0, 180.0], degrees=True)
-        rot_m = rot.as_matrix()
-        self.get_logger().info("[Aruco Pose Estimator]  ROT: {0}".format(rot_m))
-
         self.get_logger().info("[Aruco Pose Estimator] node ready")
 
 
