@@ -33,3 +33,6 @@ The node also publish a transform from camera link to (marker_link_prefix + mark
 ## Depend
 
 ROS2
+opencv-python
+opencv-contrib-python
+scipy
