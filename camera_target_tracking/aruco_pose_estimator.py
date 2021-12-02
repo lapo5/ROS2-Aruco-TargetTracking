@@ -55,10 +55,8 @@ class ArucoPoseNode(Node):
         self.use_custom_marker_side_dict = self.get_parameter("custom_marker_side_dict.enable").value
 
         self.custom_marker_sides = dict()
-        #self.custom_marker_sides[69] = 0.1
-        #self.custom_marker_sides[0] = 0.03
-        if self.use_custom_marker_side_dict:
 
+        if self.use_custom_marker_side_dict:
             self.declare_parameter("custom_marker_side_dict.number_of_entries", "0")
             self.custom_dict_n_ = int(self.get_parameter("custom_marker_side_dict.number_of_entries").value)
 
@@ -91,10 +89,8 @@ class ArucoPoseNode(Node):
 
         package_share_directory = get_package_share_directory(self.camera_module)
         if self.camera_optic_length == "auto":
-            # Path to store the calibration file
             self.calibration_camera_path = package_share_directory + "/calibration/calib_params.json"
         else:
-            # Path to store the calibration file
             self.calibration_camera_path = package_share_directory + "/calibration/calib_params_" + self.camera_optic_length + ".json"
 
 
@@ -163,7 +159,7 @@ class ArucoPoseNode(Node):
             dictionary=self.aruco_dict)
 
         self.br = tf2_ros.TransformBroadcaster(self)
-        self.get_logger().info("[Aruco Pose Estimator] node ready")
+        self.get_logger().info("[Aruco Pose Estimator] Node Ready")
 
 
     # Destructor function: call the stop service and disarm the camera regularly
@@ -183,7 +179,7 @@ class ArucoPoseNode(Node):
         future = client.call_async(request)
         future.add_done_callback(partial(self.callback_call_stop_service, stop_flag=stop_flag))
 
-    # This function is a callback to the client future
+
     def callback_call_stop_service(self, future, stop_flag):
         try:
             response = future.result()
@@ -191,7 +187,7 @@ class ArucoPoseNode(Node):
         except Exception as e:
             self.get_logger().info("Service call failed %r" %(e,))
 
-    # This function upload from JSON the intrinsic camera parameters k_mtx and dist_coeff
+
     def get_cam_parameters(self):
         with open(self.calibration_camera_path, "r") as readfile:
             self.cam_params = json.load(readfile)
@@ -200,7 +196,6 @@ class ArucoPoseNode(Node):
         self.cam_params["dist"] = np.array(self.cam_params["dist"], dtype=float)
 
 
-    # This function store the received frame in a class attribute
     def callback_frame(self, msg):
         frame = self.bridge.imgmsg_to_cv2(msg)
         if len(frame.shape) == 3:
@@ -211,7 +206,6 @@ class ArucoPoseNode(Node):
         self.estimate_pose()
 
 
-    # This function detect and estimate the marker pose wrt the camera frame
     def estimate_pose(self):
 
         corners, ids, rejected = aruco.detectMarkers(self.frame, self.aruco_dict, parameters = self.aruco_params)
@@ -260,7 +254,6 @@ class ArucoPoseNode(Node):
             self.presence_pub[marker_not_seen].publish(presence_msg)
 
 
-    # This function publish the pose information from each frame
     def publish_pose(self, marker_id, tvec, rvec):
 
         if not marker_id in self.marker_ids_seen:
@@ -287,7 +280,6 @@ class ArucoPoseNode(Node):
         rot = R.from_rotvec([rvec[0], rvec[1], rvec[2]])
         quat = rot.as_quat()
 
-        # short-Rodrigues (angle-axis)
         msg.transform.rotation.x = quat[0]
         msg.transform.rotation.y = quat[1]
         msg.transform.rotation.z = quat[2]
@@ -299,7 +291,6 @@ class ArucoPoseNode(Node):
         presence_msg = Bool()
         presence_msg.data = True
         self.presence_pub[marker_id].publish(presence_msg)
-
         
         self.br.sendTransform(msg)
         
@@ -341,15 +332,13 @@ class ArucoPoseNode(Node):
                 cv2.putText(self.frame_color, str(markerID),(topLeft[0], topLeft[1] - 10), cv2.FONT_HERSHEY_SIMPLEX,
                     0.5, (0, 255, 0), 2)
 
-
-
             self.image_message = self.bridge.cv2_to_imgmsg(self.frame_color, encoding="bgr8")
             self.image_message.header = Header()
             self.image_message.header.stamp = self.get_clock().now().to_msg()
             self.image_message.header.frame_id = self.camera_link_frame
             self.frame_pub.publish(self.image_message)
 
-# Main loop function
+
 def main(args=None):
     rclpy.init(args=args)
     node = ArucoPoseNode()
@@ -362,9 +351,6 @@ def main(args=None):
         node.get_logger().info('[Aruco Pose Estimator] Exception:', file=sys.stderr)
         raise
     finally:
-        # Destroy the node explicitly
-        # (optional - Done automatically when node is garbage collected)
-        #node.clean_exit()
         rclpy.shutdown() 
 
 
