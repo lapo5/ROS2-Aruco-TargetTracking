@@ -237,7 +237,7 @@ class ArucoPoseNode(Node):
             if self.search_for_grid:
                 retval, rvec2, tvec2 = aruco.estimatePoseBoard(corners, ids, self.board, self.cam_params["mtx"], self.cam_params["dist"], rvec, tvec)
 
-                if retval > 0:
+                if retval > 5:
                     self.currently_seen_ids.add(self.grid_output_id)
                     
                     if tvec2.shape[0] == 3:
