@@ -13,7 +13,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
 
     rviz_config_path = os.path.join(get_package_share_directory("camera_target_tracking"), 'rviz', 'rviz_pasqualone.rviz')
-    camera_link = 'camera_link'
+    camera_link = 'parking_camera_link'
     for arg in sys.argv:
         if arg.startswith("project:="):
             project = arg.split(":=")[1]

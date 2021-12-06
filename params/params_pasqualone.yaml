@@ -23,15 +23,24 @@ aruco_detector:
       marker_link_prefix: marker_link_
 
     aruco:
-      dict: 5X5_250
+      dict: 5X5_100
 
-    camera_optic_length: 25mm
+    camera_optic_length: 8mm
       
     grid:
       detect_grid: True
-      output_id: 20
-      grid_ids: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-      marker_length: 0.07
-      marker_separation: 0.04
-      rows: 3
-      cols: 3
+      number_of_grids: 2
+      grid_0:
+        output_id: 20
+        grid_ids: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+        marker_length: 0.07
+        marker_separation: 0.04
+        rows: 3
+        cols: 3
+      grid_1:
+        output_id: 40
+        grid_ids: [30, 31, 32, 33, 34, 35, 36, 37, 38]
+        marker_length: 0.084
+        marker_separation: 0.012
+        rows: 3
+        cols: 3

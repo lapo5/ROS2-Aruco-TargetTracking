@@ -118,46 +118,72 @@ class ArucoPoseNode(Node):
         self.declare_parameter("grid.detect_grid", "False")
         self.search_for_grid = self.get_parameter("grid.detect_grid").value
 
-        self.declare_parameter("grid.output_id", "10")
-        self.grid_output_id = int(self.get_parameter("grid.output_id").value)
+        self.declare_parameter("grid.number_of_grids", "1")
+        self.grid_number = int(self.get_parameter("grid.number_of_grids").value)
 
-        self.declare_parameter("grid.marker_length", "0.07")
-        self.grid_marker_length = float(self.get_parameter("grid.marker_length").value)
+        self.grid_output_ids = []
+        self.grid_marker_lengths = []
+        self.grid_marker_separations = []
+        self.grid_rows = []
+        self.grid_cols = []
+        self.grid_ids = []
+        self.grid_overall_ids = set()
 
-        self.declare_parameter("grid.marker_separation", "0.04")
-        self.grid_marker_separation = float(self.get_parameter("grid.marker_separation").value)
+        self.boards = []
 
-        self.declare_parameter("grid.rows", "3")
-        self.grid_rows = int(self.get_parameter("grid.rows").value)
+        if self.search_for_grid:
 
-        self.declare_parameter("grid.cols", "3")
-        self.grid_cols = int(self.get_parameter("grid.cols").value)
+            for i in range (0, self.grid_number):
 
-        self.declare_parameter("grid.grid_ids", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-        self.grid_ids = self.get_parameter("grid.grid_ids").value
+                entry_name = "grid.grid_" + str(i) + "."
+                self.declare_parameter(entry_name + "output_id", "10")
+                grid_output_id = int(self.get_parameter(entry_name + "output_id").value)
+                self.grid_output_ids.append(grid_output_id)
+                
+                self.declare_parameter(entry_name + "marker_length", "0.07")
+                grid_marker_length = float(self.get_parameter(entry_name + "marker_length").value)
+                self.grid_marker_lengths.append(grid_marker_length)
+                
+                self.declare_parameter(entry_name + "marker_separation", "0.04")
+                grid_marker_separation = float(self.get_parameter(entry_name + "marker_separation").value)
+                self.grid_marker_separations.append(grid_marker_separation)
+                
+                self.declare_parameter(entry_name + "rows", "3")
+                grid_rows = int(self.get_parameter(entry_name + "rows").value)
+                self.grid_rows.append(grid_rows)
+                
+                self.declare_parameter(entry_name + "cols", "3")
+                grid_cols = int(self.get_parameter(entry_name + "cols").value)
+                self.grid_cols.append(grid_cols)
+                
+                self.declare_parameter(entry_name + "grid_ids", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+                grid_ids = self.get_parameter(entry_name + "grid_ids").value
+                
+                self.grid_ids.append(grid_ids)
+                self.grid_overall_ids.update(grid_ids)
 
+                board = aruco.GridBoard_create(
+                    markersX=self.grid_rows[i], 
+                    markersY=self.grid_cols[i], 
+                    markerLength=self.grid_marker_lengths[i], 
+                    markerSeparation=self.grid_marker_separations[i], 
+                    dictionary=self.aruco_dict,
+                    firstMarker=grid_ids[0]
+                )
+                self.boards.append(board)
 
         self.aruco_params = aruco.DetectorParameters_create()
         self.bridge = CvBridge()
 
         self.frame_pub = self.create_publisher(Image, self.marker_image_topic, 1)
 
-        # Subscription
         self.frame_sub = self.create_subscription(Image, self.raw_frame_topic, self.callback_frame, 1)
 
-        # Publishers
         self.transforms_pub = dict()
         self.presence_pub = dict()
 
         self.marker_ids_seen = set()
-
-        self.board = aruco.GridBoard_create(
-            markersX=self.grid_rows, 
-            markersY=self.grid_cols, 
-            markerLength=self.grid_marker_length, 
-            markerSeparation=self.grid_marker_separation, 
-            dictionary=self.aruco_dict)
-
+        
         self.br = tf2_ros.TransformBroadcaster(self)
         self.get_logger().info("[Aruco Pose Estimator] Node Ready")
 
@@ -168,7 +194,7 @@ class ArucoPoseNode(Node):
 
 
     # This function is a client which asks the camera to shutdown when the node is killed
-    def  callback_stop_service(self, stop_flag):
+    def callback_stop_service(self, stop_flag):
         client = self.create_client(CameraState, self.service_stop_camera)
         while not client.wait_for_service(1.0):
             self.get_logger().warn("Waiting for server response...")
@@ -210,7 +236,7 @@ class ArucoPoseNode(Node):
 
         corners, ids, rejected = aruco.detectMarkers(self.frame, self.aruco_dict, parameters = self.aruco_params)
 
-        #self.get_logger().warn("ids: {0}".format(ids))
+        # self.get_logger().warn("ids: {0}".format(ids))
         self.currently_seen_ids = set()
         if ids is not None and len(ids) > 0: 
 
@@ -230,22 +256,25 @@ class ArucoPoseNode(Node):
                 rvec, tvec, _ = aruco.estimatePoseSingleMarkers(marker_corner, marker_side, 
                     self.cam_params["mtx"], self.cam_params["dist"])
 
-                if not self.search_for_grid or marker_id[0] not in self.grid_ids:
+                if not self.search_for_grid or marker_id[0] not in self.grid_overall_ids:
                     self.publish_pose(marker_id[0], tvec[0][0], rvec[0][0])
                     
             
             if self.search_for_grid:
-                retval, rvec2, tvec2 = aruco.estimatePoseBoard(corners, ids, self.board, self.cam_params["mtx"], self.cam_params["dist"], rvec, tvec)
 
-                if retval > 5:
-                    self.currently_seen_ids.add(self.grid_output_id)
-                    
-                    if tvec2.shape[0] == 3:
-                        tvec2_ = [tvec2[0][0], tvec2[1][0], tvec2[2][0]]
-                        rvec2_ = [rvec2[0][0], rvec2[1][0], rvec2[2][0]]
-                        self.publish_pose(self.grid_output_id, tvec2_, rvec2_)
-                    else:
-                        self.publish_pose(self.grid_output_id, tvec2[0][0], rvec2[0][0])
+                for i in range (0, self.grid_number):
+                    retval, rvec2, tvec2 = aruco.estimatePoseBoard(corners, ids, self.boards[i], self.cam_params["mtx"], self.cam_params["dist"], rvec, tvec)
+
+                    self.get_logger().info("[Aruco Pose Estimator] retval: {0}".format(retval))
+                    if retval > 5:
+                        self.currently_seen_ids.add(self.grid_output_ids[i])
+                        
+                        if tvec2.shape[0] == 3:
+                            tvec2_ = [tvec2[0][0], tvec2[1][0], tvec2[2][0]]
+                            rvec2_ = [rvec2[0][0], rvec2[1][0], rvec2[2][0]]
+                            self.publish_pose(self.grid_output_ids[i], tvec2_, rvec2_)
+                        else:
+                            self.publish_pose(self.grid_output_ids[i], tvec2[0][0], rvec2[0][0])
         
 
         for marker_not_seen in self.marker_ids_seen.difference(self.currently_seen_ids):
