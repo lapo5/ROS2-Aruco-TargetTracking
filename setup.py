@@ -22,11 +22,11 @@ setup(
     zip_safe=True,
     maintainer='Marco Lapolla',
     maintainer_email='marco.lapolla5@gmail.com',
-    description='ARUCO Target Tracking',
+    description='Aruco Target Tracking',
     license='BSD',
     entry_points={
         'console_scripts': [
-        'aruco_detector = camera_target_tracking.aruco_pose_estimator:main',
+        'aruco_detector = camera_target_tracking.aruco_detector:main',
         ],
     },
 )

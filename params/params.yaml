@@ -1,0 +1,28 @@
+aruco_detector:
+  ros__parameters:
+    camera_module: hal_camera
+    pose_topic_hz: 30
+    marker_side: 0.1
+
+    custom_marker_side_dict:
+      enable: False
+
+    publishers:
+      marker_image: /target_tracking/marker_image
+      marker_transform_prefix: /target_tracking/camera_to_marker_transform/marker_
+      marker_presence_prefix: /target_tracking/camera_to_marker_presence/marker_
+
+    subscribers:
+      raw_frame: /camera/raw_frame
+
+    frames: 
+      camera_link: camera_link
+      marker_link_prefix: marker_link_
+
+    aruco:
+      dict: 5X5_100
+
+    camera_optic_length: auto
+      
+    grid:
+      detect_grid: False

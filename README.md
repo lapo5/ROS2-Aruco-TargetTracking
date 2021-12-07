@@ -11,8 +11,14 @@ The calibration of the camera must be specified via the params file.
 
 aruco.dict: which dictionary used for the aruco markers.
 marker side: default marker side to consider.
-custom_marker_side_dict: to define different sides of aruco and detect all in the correct way.
-grid: to detect some marker as part of a grid for better performances.
+custom_marker_side_dict: to define different sides of aruco markers and detect all in the correct way.
+grid: to detect some marker as part of a grid for better performances (multiple grids supported).
+
+## Camera Calibration Params
+
+Must be a json file (standard output oif OpenCv Calibration process), located in <camera_module> install folder (specified by param).
+- Case <camera_optic_length> param is 'auto': camera_module/calibration/calib_params.json
+- Case <camera_optic_length> param is 'Xmm': camera_module/calibration/calib_params_Xmm.json
 
 ## Input/Output
 
@@ -34,5 +40,5 @@ The node also publish a transform from camera link to (marker_link_prefix + mark
 
 ROS2
 opencv-python
-opencv-contrib-python
+opencv-contrib-python (aruco)
 scipy

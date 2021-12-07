@@ -3,14 +3,13 @@
 <package format="3">
   <name>camera_target_tracking</name>
   <version>0.0.0</version>
-  <description>ARUCO Target Tracking Module</description>
+  <description>Aruco Target Tracking Module</description>
   <maintainer email="alessandro.scarciglia-somministrato@thalesaleniaspace.com">Alessandro Scarciglia</maintainer>
   <license>BSD</license>
 
   <depend>rclpy</depend>
   <depend>sensor_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>allied_vision_camera_interfaces</depend>
 
   <export>
     <build_type>ament_python</build_type>

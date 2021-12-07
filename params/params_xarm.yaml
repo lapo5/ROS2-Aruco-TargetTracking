@@ -26,9 +26,6 @@ aruco_detector:
       marker_transform_prefix: /target_tracking/camera_to_marker_transform/marker_
       marker_presence_prefix: /target_tracking/camera_to_marker_presence/marker_
 
-    client_services:
-      stop_camera: /arm_camera/get_cam_state
-
     subscribers:
       raw_frame: /arm_camera/raw_frame
 

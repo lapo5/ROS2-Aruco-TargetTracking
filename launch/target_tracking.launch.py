@@ -14,7 +14,7 @@ from launch.actions.execute_process import ExecuteProcess
 
 def generate_launch_description():
 
-    params = os.path.join(get_package_share_directory("camera_target_tracking"), 'params', 'params_pasqualone.yaml')
+    params = os.path.join(get_package_share_directory("camera_target_tracking"), 'params', 'params.yaml')
     
     for arg in sys.argv:
         if arg.startswith("project:="):

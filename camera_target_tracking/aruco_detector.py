@@ -19,17 +19,14 @@ from std_msgs.msg import Header, Bool
 from geometry_msgs.msg import TransformStamped
 from sensor_msgs.msg import Image
 
-from allied_vision_camera_interfaces.srv import CameraState
-
 from ament_index_python.packages import get_package_share_directory
-
 
 # Class definition fo the estimator
 class ArucoPoseNode(Node):
     def __init__(self):
         super().__init__("aruco_detector")
 
-        self.declare_parameter("camera_module", "hal_allied_vision_camera")
+        self.declare_parameter("camera_module", "hal_camera")
         self.camera_module = self.get_parameter("camera_module").value
 
         self.declare_parameter("publish_image_feedback", "True")
@@ -69,13 +66,13 @@ class ArucoPoseNode(Node):
                 m_side = float(self.get_parameter(entry_name + ".marker_side").value)
                 self.custom_marker_sides[m_id] = m_side
 
-        self.declare_parameter("subscribers.raw_frame", "/parking_camera/raw_frame")
+        self.declare_parameter("subscribers.raw_frame", "/camera/raw_frame")
         self.raw_frame_topic = self.get_parameter("subscribers.raw_frame").value
 
-        self.declare_parameter("client_services.stop_camera", "/parking_camera/get_cam_state")
+        self.declare_parameter("client_services.stop_camera", "/camera/get_cam_state")
         self.service_stop_camera = self.get_parameter("client_services.stop_camera").value
 
-        self.declare_parameter("frames.camera_link", "parking_camera_link")
+        self.declare_parameter("frames.camera_link", "camera_link")
         self.camera_link_frame = self.get_parameter("frames.camera_link").value
         
         self.declare_parameter("frames.marker_link_prefix", "marker_link_")
@@ -118,7 +115,7 @@ class ArucoPoseNode(Node):
         self.declare_parameter("grid.detect_grid", "False")
         self.search_for_grid = self.get_parameter("grid.detect_grid").value
 
-        self.declare_parameter("grid.number_of_grids", "1")
+        self.declare_parameter("grid.number_of_grids", "0")
         self.grid_number = int(self.get_parameter("grid.number_of_grids").value)
 
         self.grid_output_ids = []
@@ -188,24 +185,6 @@ class ArucoPoseNode(Node):
         self.get_logger().info("[Aruco Pose Estimator] Node Ready")
 
 
-    # Destructor function: call the stop service and disarm the camera regularly
-    def clean_exit(self):
-        self.callback_stop_service(False)
-
-
-    # This function is a client which asks the camera to shutdown when the node is killed
-    def callback_stop_service(self, stop_flag):
-        client = self.create_client(CameraState, self.service_stop_camera)
-        while not client.wait_for_service(1.0):
-            self.get_logger().warn("Waiting for server response...")
-
-        request = CameraState.Request()
-        request.command_state = stop_flag
-
-        future = client.call_async(request)
-        future.add_done_callback(partial(self.callback_call_stop_service, stop_flag=stop_flag))
-
-
     def callback_call_stop_service(self, future, stop_flag):
         try:
             response = future.result()
@@ -233,7 +212,6 @@ class ArucoPoseNode(Node):
 
 
     def estimate_pose(self):
-
         corners, ids, rejected = aruco.detectMarkers(self.frame, self.aruco_dict, parameters = self.aruco_params)
 
         # self.get_logger().warn("ids: {0}".format(ids))
