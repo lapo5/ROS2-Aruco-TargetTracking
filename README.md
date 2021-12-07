@@ -6,6 +6,7 @@ Aruco Detection and Pose Estimation ROS2 Package.
 
 ROS2 Package to detect the pose of multiple aruco from an input camera stream.
 The calibration of the camera must be specified via the params file.
+The package contains also a node to simulate a marker, for debugging and unit tests.
 
 ## Aruco Detection Params
 

@@ -27,6 +27,7 @@ setup(
     entry_points={
         'console_scripts': [
         'aruco_detector = camera_target_tracking.aruco_detector:main',
+        'simulate_marker = camera_target_tracking.simulate_marker:main',
         ],
     },
 )
