@@ -30,8 +30,8 @@ Input:
 Output: 
 
 For each marker detected:
-	- Pose: 				marker_transform_prefix + marker_id 			(geometry msgs/Transform Stamped)
-	- Presence: 			marker_presence_prefix + marker_id				(std msgs/Bool)
+- Pose: 				marker_transform_prefix + marker_id 			(geometry msgs/Transform Stamped)
+- Presence: 				marker_presence_prefix + marker_id				(std msgs/Bool)
 
 ## TF2
 
