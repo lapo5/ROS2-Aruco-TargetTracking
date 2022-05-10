@@ -199,10 +199,9 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     except BaseException:
-        print('Exception in publish_fake_marker:', file=sys.stderr)
+        node.get_logger().info('[publish_fake_marker] Exception:', file=sys.stderr)
         raise
     finally:
-        # (optional - Done automatically when node is garbage collected)
         rclpy.shutdown() 
 
 
