@@ -1,0 +1,42 @@
+aruco_detector:
+  ros__parameters:
+    camera_module: hal_allied_vision_camera
+    pose_topic_hz: 30
+    marker_side: 0.1
+
+    # Specify different side for each marker id. If enable False or id not in custom dict, the node 
+    # will use the marker_side specified above
+    custom_marker_side_dict:
+      enable: True
+      number_of_entries: 3
+      entry_0:
+        id: 69
+        marker_side: 0.1
+      entry_1:
+        id: 0
+        marker_side: 0.03
+      entry_2:
+        id: 1
+        marker_side: 0.05
+
+    publish_image_feedback: False
+
+    publishers:
+      marker_image: /target_tracking/marker_image
+      marker_transform_prefix: /target_tracking/camera_to_marker_transform/marker_
+      marker_presence_prefix: /target_tracking/camera_to_marker_presence/marker_
+
+    subscribers:
+      raw_frame: /arm_camera/raw_frame
+
+    frames: 
+      camera_link: wrist_camera_link
+      marker_link_prefix: marker_link_
+
+    aruco:
+      dict: 5X5_100
+
+    camera_optic_length: 6mm
+
+    grid:
+      detect_grid: False
