@@ -188,9 +188,7 @@ class FakeMarkerPose(Node):
         self.static_broadcaster.sendTransform(self.t1)
 
         
-
-
-# Main loop function
+##### Main Function #####
 def main(args=None):
     rclpy.init(args=args)
     node = FakeMarkerPose()
@@ -205,6 +203,5 @@ def main(args=None):
         rclpy.shutdown() 
 
 
-# Main
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
